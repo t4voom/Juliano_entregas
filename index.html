@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Juliano Entregas</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Google Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Google API Client -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        decanter: {
+                            black: '#0f172a', // Slate 900
+                            dark: '#1e293b',  // Slate 800
+                            surface: '#334155', // Slate 700
+                            blue: '#2563eb',  // Blue 600
+                            accent: '#3b82f6' // Blue 500
+                        }
+                    },
+                    padding: {
+                        'safe-bottom': 'env(safe-area-inset-bottom)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Animações Suaves */
+        .tab-content { display: none; opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .tab-content.active { display: block; opacity: 1; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Input Styles Otimizados para Touch */
+        .input-field {
+            width: 100%;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+            padding: 14px; /* Mais espaço para o dedo */
+            font-size: 16px; /* Evita zoom automático no iOS */
+            border-radius: 12px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: all 0.2s;
+            appearance: none; /* Remove estilos nativos feios */
+        }
+        .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
+        
+        /* Card Styles */
+        .mobile-card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 0px; /* Removido margem pois agora agrupamos */
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #94a3b8; font-size: 0.9rem; }
+        
+        /* Ajuste Navigation Bar Mobile */
+        .nav-btn.active span { color: #3b82f6; }
+        .nav-btn.active .material-icons { transform: translateY(-2px); text-shadow: 0 4px 12px rgba(59, 130, 246, 0.5); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen pb-24 md:pb-0 selection:bg-blue-500 selection:text-white">
+
+    <!-- Header Mobile/Desktop -->
+    <header class="bg-decanter-dark/90 backdrop-blur-md border-b border-gray-700 p-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600/20 p-2 rounded-lg">
+                    <span class="material-icons text-blue-500 text-2xl">local_shipping</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold leading-none">Decanter</h1>
+                    <span class="text-xs text-blue-400 font-medium tracking-wider">ENTREGAS</span>
+                </div>
+            </div>
+            <!-- Botão de Sincronizar/Refresh visual -->
+            <button onclick="window.location.reload()" class="md:hidden text-gray-400 p-2">
+                <span class="material-icons text-xl">refresh</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 max-w-4xl mx-auto w-full">
+        
+        <!-- PÁGINA 1: ADICIONAR ENTREGA -->
+        <section id="page-add" class="tab-content active">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-white">Nova Entrega</h2>
+                <button onclick="closeDaySummary()" class="text-xs bg-green-900/50 text-green-300 px-3 py-2 rounded-lg border border-green-700 font-bold flex items-center gap-1 active:scale-95 transition">
+                    <span class="material-icons text-sm">assignment_turned_in</span> Fechar Dia
+                </button>
+            </div>
+            
+            <form id="deliveryForm" class="bg-decanter-dark p-1 rounded-xl md:p-6 md:shadow-xl md:border md:border-gray-700 bg-transparent md:bg-decanter-dark">
+                <!-- Data -->
+                <div>
+                    <label for="data">Data da Entrega</label>
+                    <input type="date" id="data" class="input-field" required>
+                </div>
+
+                <!-- Local de Saída -->
+                <div>
+                    <label for="local">Origem</label>
+                    <div class="relative">
+                        <select id="local" class="input-field appearance-none" onchange="toggleOutros()">
+                            <option value="Entrega">Entrega (Padrão)</option>
+                            <option value="Matriz">Matriz</option>
+                            <option value="Outros">Outros...</option>
+                        </select>
+                        <span class="material-icons absolute right-4 top-4 text-gray-500 pointer-events-none">expand_more</span>
+                    </div>
+                    <input type="text" id="localOutros" class="input-field hidden mt-2 animate-pulse" placeholder="Digite o nome do local...">
+                </div>
+
+                <!-- Destino -->
+                <div>
+                    <label for="destino">Destino / Cliente</label>
+                    <input type="text" id="destino" placeholder="Ex: Rua XV de Novembro, 100" class="input-field" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- KM -->
+                    <div>
+                        <label for="km">KM Rodados</label>
+                        <div class="relative">
+                            <input type="number" step="0.1" inputmode="decimal" id="km" placeholder="0.0" class="input-field pl-10" required>
+                            <span class="absolute left-3 top-3.5 text-gray-500 text-sm font-bold">KM</span>
+                        </div>
+                    </div>
+                    <!-- Valor -->
+                    <div>
+                        <label for="valor">Valor Cobrado</label>
+                        <div class="relative">
+                            <input type="number" step="0.01" inputmode="decimal" id="valor" placeholder="0.00" class="input-field pl-10" required>
+                            <span class="absolute left-3 top-3.5 text-green-500 text-sm font-bold">R$</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observação -->
+                <div>
+                    <label for="obs">Observação</label>
+                    <textarea id="obs" rows="3" class="input-field" placeholder="Algum detalhe extra?"></textarea>
+                </div>
+
+                <div class="h-4"></div> <!-- Spacer -->
+
+                <button type="submit" class="w-full bg-blue-600 active:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-blue-900/50 transition transform active:scale-[0.98] flex items-center justify-center gap-2 text-lg">
+                    <span class="material-icons">save</span> Salvar Entrega
+                </button>
+            </form>
+        </section>
+
+        <!-- PÁGINA 2: LISTA DE ENTREGAS -->
+        <section id="page-list" class="tab-content">
+            <div class="flex justify-between items-center mb-6 sticky top-0 bg-[#0f172a] z-30 py-2">
+                <div>
+                    <h2 class="text-xl font-bold">Histórico</h2>
+                    <p class="text-xs text-gray-400" id="totalCount">Carregando...</p>
+                </div>
+                <button onclick="deleteAll()" class="bg-red-900/30 text-red-400 hover:bg-red-900/50 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 border border-red-900/50 transition">
+                    <span class="material-icons text-sm">delete_forever</span> Limpar
+                </button>
+            </div>
+
+            <!-- Mobile List (Cards grouped by day) -->
+            <div id="mobileList" class="md:hidden space-y-6 pb-safe-bottom">
+                <!-- Cards injetados via JS -->
+            </div>
+
+            <!-- Desktop Table (Grouped logic inside) -->
+            <div class="hidden md:block overflow-hidden bg-decanter-dark rounded-xl shadow-xl border border-gray-700">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-800/50 text-gray-400 uppercase text-[11px] font-bold tracking-wider">
+                        <tr>
+                            <th class="p-4">Data</th>
+                            <th class="p-4">Origem</th>
+                            <th class="p-4">Destino</th>
+                            <th class="p-4 text-right">KM</th>
+                            <th class="p-4 text-right">Valor</th>
+                            <th class="p-4">Obs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="desktopTableBody" class="divide-y divide-gray-700/50 text-sm">
+                        <!-- Linhas injetadas via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 opacity-50">
+                <span class="material-icons text-6xl mb-4 text-gray-600">history</span>
+                <p class="text-lg font-medium text-gray-400">Nenhuma entrega ainda.</p>
+                <button onclick="switchTab('page-add')" class="mt-4 text-blue-400 text-sm font-bold">Adicionar a primeira</button>
+            </div>
+        </section>
+
+        <!-- PÁGINA 3: EXCEL -->
+        <section id="page-excel" class="tab-content">
+            <h2 class="text-xl font-bold mb-6">Relatórios</h2>
+            
+            <div class="bg-gradient-to-br from-green-900/20 to-decanter-dark p-8 rounded-2xl shadow-xl border border-green-900/30 relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-500 blur-3xl opacity-20 rounded-full"></div>
+                
+                <h3 class="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                    <span class="material-icons text-green-500">filter_alt</span> Filtro de Período
+                </h3>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="text-xs text-green-400 uppercase">Data Inicial</label>
+                        <input type="date" id="excelStart" class="input-field bg-black/20 border-green-900/50">
+                    </div>
+                    <div>
+                        <label class="text-xs text-green-400 uppercase">Data Final</label>
+                        <input type="date" id="excelEnd" class="input-field bg-black/20 border-green-900/50">
+                    </div>
+                </div>
+
+                <p class="text-gray-400 mb-8 text-sm leading-relaxed">
+                    Gera um Excel formatado com quebra de 3 linhas entre dias e totais diários calculados.
+                </p>
+                
+                <button onclick="generateExcel()" class="w-full bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-4 px-8 rounded-xl transition shadow-lg shadow-green-900/40 flex items-center justify-center gap-3">
+                    <span class="material-icons">download</span> Baixar Relatório
+                </button>
+            </div>
+        </section>
+
+        <!-- PÁGINA 4: GMAIL -->
+        <section id="page-gmail" class="tab-content">
+            <h2 class="text-xl font-bold mb-6">Notas Fiscais</h2>
+            
+            <div class="bg-decanter-dark p-4 md:p-6 rounded-2xl shadow-xl border border-gray-700">
+                <!-- Configuração -->
+                <details class="group mb-6 bg-gray-900/50 p-4 rounded-xl border border-gray-700/50">
+                    <summary class="cursor-pointer font-bold text-gray-300 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-gray-500">settings</span> Configuração API
+                        </div>
+                        <span class="material-icons transition group-open:rotate-180">expand_more</span>
+                    </summary>
+                    <div class="mt-4 space-y-3 pt-2 border-t border-gray-700/50">
+                        <div>
+                            <label class="text-xs uppercase tracking-wider text-gray-500">Client ID</label>
+                            <input type="text" id="gClientId" class="input-field text-xs py-2 h-10 mb-0" placeholder="Cole seu Client ID aqui">
+                        </div>
+                        <div>
+                            <label class="text-xs uppercase tracking-wider text-gray-500">API Key</label>
+                            <input type="text" id="gApiKey" class="input-field text-xs py-2 h-10 mb-0" placeholder="Cole sua API Key aqui">
+                        </div>
+                    </div>
+                </details>
+
+                <div class="text-center mb-6">
+                    <button id="authBtn" onclick="handleAuthClick()" class="bg-white active:bg-gray-200 text-gray-900 font-bold py-3 px-6 rounded-xl w-full flex items-center justify-center gap-3 transition shadow-lg">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-5 h-5">
+                        Buscar no Gmail
+                    </button>
+                    <div id="authStatus" class="mt-3 text-xs font-mono text-gray-500">Status: Desconectado</div>
+                </div>
+
+                <!-- Lista de Resultados -->
+                <div id="gmailResults" class="hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Resultados</h3>
+                        <span id="emailCount" class="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded">0</span>
+                    </div>
+                    <div id="emailList" class="space-y-3">
+                        <!-- Itens do email aqui -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Navigation Mobile (Bottom Bar Otimizada) -->
+    <nav class="fixed bottom-0 left-0 w-full bg-[#1e293b]/95 backdrop-blur-xl border-t border-gray-700/50 md:hidden z-50 pb-[env(safe-area-inset-bottom)]">
+        <div class="flex justify-between items-center px-6 h-16">
+            <button onclick="switchTab('page-add')" class="nav-btn active flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300">
+                <span class="material-icons text-2xl mb-0.5">add_circle</span>
+                <span class="text-[9px] font-medium">Novo</span>
+            </button>
+            <button onclick="switchTab('page-list')" class="nav-btn flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 text-gray-400">
+                <span class="material-icons text-2xl mb-0.5">list_alt</span>
+                <span class="text-[9px] font-medium">Lista</span>
+            </button>
+            <button onclick="switchTab('page-excel')" class="nav-btn flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 text-gray-400">
+                <span class="material-icons text-2xl mb-0.5">analytics</span>
+                <span class="text-[9px] font-medium">Excel</span>
+            </button>
+            <button onclick="switchTab('page-gmail')" class="nav-btn flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 text-gray-400">
+                <span class="material-icons text-2xl mb-0.5">mail</span>
+                <span class="text-[9px] font-medium">Notas</span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Desktop Sidebar -->
+    <div class="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 bg-decanter-dark border-r border-gray-700 pt-24 px-4 space-y-2 z-30">
+        <button onclick="switchTab('page-add')" class="nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-bold">
+            <span class="material-icons">add_circle</span> Adicionar
+        </button>
+        <button onclick="switchTab('page-list')" class="nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition text-gray-400 hover:bg-gray-800 hover:text-white">
+            <span class="material-icons">list_alt</span> Histórico
+        </button>
+        <button onclick="switchTab('page-excel')" class="nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition text-gray-400 hover:bg-gray-800 hover:text-white">
+            <span class="material-icons">analytics</span> Relatórios
+        </button>
+        <button onclick="switchTab('page-gmail')" class="nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition text-gray-400 hover:bg-gray-800 hover:text-white">
+            <span class="material-icons">mail</span> Gmail
+        </button>
+
+        <div class="mt-auto mb-6 px-4">
+            <div class="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
+                <p class="text-xs text-gray-400 mb-1">Total acumulado</p>
+                <p class="text-xl font-bold text-green-400" id="sidebarTotal">R$ 0,00</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 md:top-24 md:right-8 md:left-auto md:translate-x-0 bg-gray-800 border border-green-500/30 text-white px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none flex items-center gap-3 z-[60] min-w-[300px]">
+        <div class="bg-green-500/20 p-2 rounded-full">
+            <span class="material-icons text-green-500 text-xl">check</span>
+        </div>
+        <div>
+            <h4 class="font-bold text-sm">Sucesso</h4>
+            <span id="toastMsg" class="text-xs text-gray-300">Operação realizada</span>
+        </div>
+    </div>
+    
+    <!-- Modal Resumo Dia -->
+    <div id="summaryModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-decanter-dark border border-gray-700 p-6 rounded-2xl w-full max-w-sm shadow-2xl transform transition-all scale-100">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-white">Fechamento do Dia</h3>
+                <button onclick="document.getElementById('summaryModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            
+            <p class="text-gray-400 text-sm mb-1">Data Selecionada</p>
+            <p class="text-lg font-bold text-white mb-6 border-b border-gray-700 pb-2" id="summaryDate">--/--/----</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-800 p-3 rounded-lg">
+                    <span class="text-xs text-gray-400 uppercase">Total KM</span>
+                    <p class="text-xl font-bold text-blue-400" id="summaryKm">0.0</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded-lg">
+                    <span class="text-xs text-gray-400 uppercase">Total Valor</span>
+                    <p class="text-xl font-bold text-green-400" id="summaryVal">R$ 0,00</p>
+                </div>
+            </div>
+            
+            <div class="text-xs text-gray-500 text-center mb-4">
+                Este é apenas um resumo visual. Os dados continuam salvos no histórico.
+            </div>
+
+            <button onclick="document.getElementById('summaryModal').classList.add('hidden')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl">
+                OK, Fechar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURAÇÃO INICIAL ---
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('data').value = today;
+        document.getElementById('excelStart').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]; // Dia 1 do mês atual
+        document.getElementById('excelEnd').value = today;
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // --- 2. NAVEGAÇÃO ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            // Mobile Nav
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-blue-500');
+                btn.classList.add('text-gray-400');
+            });
+            
+            const iconMap = { 'page-add': 0, 'page-list': 1, 'page-excel': 2, 'page-gmail': 3 };
+            const activeIndex = iconMap[tabId];
+            const mobileBtns = document.querySelectorAll('.nav-btn');
+            if(mobileBtns[activeIndex]) {
+                mobileBtns[activeIndex].classList.add('active', 'text-blue-500');
+                mobileBtns[activeIndex].classList.remove('text-gray-400');
+            }
+
+            // Desktop Nav
+            document.querySelectorAll('.nav-desk-btn').forEach(btn => {
+                btn.className = "nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition text-gray-400 hover:bg-gray-800 hover:text-white";
+            });
+            const deskBtns = document.querySelectorAll('.nav-desk-btn');
+            if(deskBtns[activeIndex]) {
+                deskBtns[activeIndex].className = "nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-bold";
+            }
+            
+            if(tabId === 'page-list') renderList();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- 3. LÓGICA DE CADASTRO ---
+        function toggleOutros() {
+            const select = document.getElementById('local');
+            const input = document.getElementById('localOutros');
+            if (select.value === 'Outros') {
+                input.classList.remove('hidden');
+                setTimeout(() => input.focus(), 100);
+            } else {
+                input.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('deliveryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const localSelect = document.getElementById('local').value;
+            const localFinal = localSelect === 'Outros' ? document.getElementById('localOutros').value : localSelect;
+            if(!localFinal) { alert('Digite o local!'); return; }
+
+            const entrega = {
+                id: Date.now(),
+                data: document.getElementById('data').value,
+                local: localFinal,
+                destino: document.getElementById('destino').value,
+                km: parseFloat(document.getElementById('km').value),
+                valor: parseFloat(document.getElementById('valor').value),
+                obs: document.getElementById('obs').value
+            };
+
+            const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+            entregas.push(entrega);
+            localStorage.setItem('entregasDecanter', JSON.stringify(entregas));
+
+            showToast('Entrega salva!');
+            this.reset();
+            document.getElementById('data').value = today;
+            document.getElementById('local').value = 'Entrega';
+            toggleOutros();
+            if(navigator.vibrate) navigator.vibrate(50);
+        });
+
+        // --- 3.1 RESUMO DO DIA (FECHAR DIA) ---
+        function closeDaySummary() {
+            const selectedDate = document.getElementById('data').value;
+            const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+            
+            // Filtra entregas da data selecionada
+            const todayEntregas = entregas.filter(e => e.data === selectedDate);
+            
+            const totalKm = todayEntregas.reduce((sum, item) => sum + item.km, 0);
+            const totalVal = todayEntregas.reduce((sum, item) => sum + item.valor, 0);
+            
+            document.getElementById('summaryDate').innerText = new Date(selectedDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+            document.getElementById('summaryKm').innerText = totalKm.toFixed(1) + ' km';
+            document.getElementById('summaryVal').innerText = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            document.getElementById('summaryModal').classList.remove('hidden');
+        }
+
+        // --- 4. LÓGICA DE LISTAGEM (AGRUPADO POR DATA) ---
+        function renderList() {
+            const mobileList = document.getElementById('mobileList');
+            const desktopBody = document.getElementById('desktopTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const totalCount = document.getElementById('totalCount');
+            const sidebarTotal = document.getElementById('sidebarTotal');
+            
+            const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+            
+            mobileList.innerHTML = '';
+            desktopBody.innerHTML = '';
+
+            if (entregas.length === 0) {
+                emptyState.classList.remove('hidden');
+                totalCount.innerText = "0 registros";
+                sidebarTotal.innerText = "R$ 0,00";
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Ordenar: Mais recente primeiro
+            entregas.sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            let totalValueOverall = 0;
+            
+            // Agrupar por data
+            const grouped = entregas.reduce((groups, item) => {
+                const date = item.data;
+                if (!groups[date]) groups[date] = [];
+                groups[date].push(item);
+                return groups;
+            }, {});
+
+            // Ordenar chaves das datas (descrescente)
+            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(date => {
+                const items = grouped[date];
+                const dayTotalKm = items.reduce((sum, i) => sum + i.km, 0);
+                const dayTotalVal = items.reduce((sum, i) => sum + i.valor, 0);
+                totalValueOverall += dayTotalVal;
+
+                const dateFmt = new Date(date).toLocaleDateString('pt-BR', {timeZone: 'UTC', weekday: 'short', day: '2-digit', month: '2-digit'});
+
+                // --- MOBILE RENDER (Group Header) ---
+                const groupDiv = document.createElement('div');
+                groupDiv.innerHTML = `
+                    <div class="flex justify-between items-end mb-2 px-1">
+                        <div class="text-sm font-bold text-gray-300 uppercase">${dateFmt}</div>
+                        <div class="text-xs text-right">
+                            <div class="text-gray-400">Total Dia</div>
+                            <span class="text-green-400 font-bold">${dayTotalVal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
+                        </div>
+                    </div>
+                `;
+                
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "mobile-card mb-2"; // Margem apenas entre cartões
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-1">
+                            <h4 class="text-base font-bold text-white leading-tight">${item.destino}</h4>
+                            <span class="text-green-400 text-sm font-bold">${item.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-gray-400">
+                            <div class="flex items-center gap-1"><span class="material-icons text-sm text-blue-500">place</span> ${item.local}</div>
+                            <div class="flex items-center gap-1"><span class="material-icons text-sm text-orange-500">speed</span> ${item.km} km</div>
+                        </div>
+                    `;
+                    groupDiv.appendChild(card);
+                });
+                
+                // Divisor visual no mobile
+                groupDiv.appendChild(document.createElement('hr')).className = "border-gray-800 my-4";
+                mobileList.appendChild(groupDiv);
+
+                // --- DESKTOP RENDER ---
+                // Row Header
+                const trHead = document.createElement('tr');
+                trHead.className = "bg-gray-800/80";
+                trHead.innerHTML = `
+                    <td colspan="6" class="p-2 pl-4 text-xs font-bold text-blue-300 uppercase tracking-wider">
+                        ${dateFmt} — Total: ${dayTotalVal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})} | ${dayTotalKm.toFixed(1)} km
+                    </td>
+                `;
+                desktopBody.appendChild(trHead);
+
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-700/50 transition border-b border-gray-700/30";
+                    tr.innerHTML = `
+                        <td class="p-3 text-gray-500 text-xs text-center"><span class="material-icons text-sm">subdirectory_arrow_right</span></td>
+                        <td class="p-3 text-blue-400 text-sm">${item.local}</td>
+                        <td class="p-3 text-gray-300 font-medium text-sm">${item.destino}</td>
+                        <td class="p-3 text-right text-gray-400 text-sm">${item.km}</td>
+                        <td class="p-3 text-right text-green-400 font-mono font-bold text-sm">${item.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
+                        <td class="p-3 text-gray-500 text-xs italic max-w-xs truncate">${item.obs || ''}</td>
+                    `;
+                    desktopBody.appendChild(tr);
+                });
+            });
+
+            const totalFmt = totalValueOverall.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            totalCount.innerText = `${entregas.length} entregas • Geral: ${totalFmt}`;
+            if(sidebarTotal) sidebarTotal.innerText = totalFmt;
+        }
+
+        function deleteAll() {
+            if(confirm('Apagar TUDO?')) {
+                localStorage.removeItem('entregasDecanter');
+                renderList();
+                showToast('Limpo com sucesso.');
+            }
+        }
+
+        // --- 5. EXCEL AVANÇADO ---
+        function generateExcel() {
+            const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+            if (entregas.length === 0) { alert("Nada para exportar."); return; }
+
+            const startStr = document.getElementById('excelStart').value;
+            const endStr = document.getElementById('excelEnd').value;
+            
+            if(!startStr || !endStr) { alert("Selecione as datas."); return; }
+            
+            const startDate = new Date(startStr);
+            const endDate = new Date(endStr);
+
+            // Filtrar por data
+            const filtered = entregas.filter(e => {
+                const d = new Date(e.data);
+                return d >= startDate && d <= endDate;
+            });
+
+            if(filtered.length === 0) { alert("Nenhuma entrega neste período."); return; }
+
+            // Ordenar Cronologicamente (Crescente) para o relatório
+            filtered.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+            // Agrupar para construção manual das linhas
+            const grouped = filtered.reduce((groups, item) => {
+                if (!groups[item.data]) groups[item.data] = [];
+                groups[item.data].push(item);
+                return groups;
+            }, {});
+
+            const finalData = [];
+            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
+
+            sortedDates.forEach(date => {
+                const items = grouped[date];
+                let dayKm = 0;
+                let dayVal = 0;
+
+                items.forEach(item => {
+                    dayKm += item.km;
+                    dayVal += item.valor;
+                    finalData.push({
+                        "Data": new Date(item.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'}),
+                        "Origem": item.local,
+                        "Destino": item.destino,
+                        "KM": item.km,
+                        "Valor (R$)": item.valor,
+                        "Obs": item.obs
+                    });
+                });
+
+                // Linha de Total do Dia
+                finalData.push({
+                    "Data": "FECHAMENTO",
+                    "Origem": "",
+                    "Destino": "TOTAL DO DIA",
+                    "KM": dayKm,
+                    "Valor (R$)": dayVal,
+                    "Obs": ""
+                });
+
+                // 3 Linhas em branco
+                for(let i=0; i<3; i++) {
+                    finalData.push({}); 
+                }
+            });
+
+            const ws = XLSX.utils.json_to_sheet(finalData);
+            const wscols = [{wch:12}, {wch:15}, {wch:30}, {wch:10}, {wch:15}, {wch:30}];
+            ws['!cols'] = wscols;
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
+            
+            const fileName = `Relatorio_Decanter_${startStr}_ate_${endStr}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showToast('Baixando planilha...');
+        }
+
+        // --- 6. GMAIL API ---
+        let tokenClient;
+        let gapiInited = false, gisInited = false;
+
+        function handleAuthClick() {
+            const CLIENT_ID = document.getElementById('gClientId').value;
+            const API_KEY = document.getElementById('gApiKey').value;
+
+            if (!CLIENT_ID || !API_KEY) {
+                alert('Configure as chaves do Google primeiro (clique na engrenagem).');
+                return;
+            }
+
+            document.getElementById('authBtn').innerHTML = `<span class="material-icons animate-spin">refresh</span> Conectando...`;
+            
+            if (!gapiInited || !gisInited) initializeGapi(API_KEY, CLIENT_ID);
+            else authAndFetch();
+        }
+
+        function initializeGapi(apiKey, clientId) {
+            gapi.load('client', async () => {
+                await gapi.client.init({ apiKey: apiKey, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest'] });
+                gapiInited = true;
+                initializeGis(clientId);
+            });
+        }
+
+        function initializeGis(clientId) {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/gmail.readonly',
+                callback: '', 
+            });
+            gisInited = true;
+            authAndFetch();
+        }
+
+        function authAndFetch() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error) throw (resp);
+                document.getElementById('authStatus').innerText = "Status: Conectado ✅";
+                await listMessages();
+            };
+
+            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'});
+            else tokenClient.requestAccessToken({prompt: ''});
+        }
+
+        async function listMessages() {
+            try {
+                const response = await gapi.client.gmail.users.messages.list({
+                    'userId': 'me',
+                    'q': 'filename:xml OR filename:pdf ("NFe" OR "NF-e" OR "DANFE")',
+                    'maxResults': 10
+                });
+
+                const messages = response.result.messages;
+                const emailListDiv = document.getElementById('emailList');
+                const resultsDiv = document.getElementById('gmailResults');
+                const countSpan = document.getElementById('emailCount');
+                
+                emailListDiv.innerHTML = '';
+                resultsDiv.classList.remove('hidden');
+                document.getElementById('authBtn').innerHTML = `<span class="material-icons">check</span> Atualizado`;
+
+                if (!messages || messages.length === 0) {
+                    emailListDiv.innerHTML = '<div class="text-center py-4 text-gray-500">Nenhuma NFe encontrada nos e-mails recentes.</div>';
+                    countSpan.innerText = '0';
+                    return;
+                }
+
+                countSpan.innerText = messages.length;
+
+                for (const message of messages) {
+                    const details = await gapi.client.gmail.users.messages.get({ 'userId': 'me', 'id': message.id });
+                    const headers = details.result.payload.headers;
+                    const subject = headers.find(h => h.name === 'Subject')?.value || '(Sem Assunto)';
+                    const from = headers.find(h => h.name === 'From')?.value || 'Desconhecido';
+                    const date = headers.find(h => h.name === 'Date')?.value || '';
+                    
+                    const div = document.createElement('div');
+                    div.className = "bg-gray-800 p-3 rounded-xl border border-gray-700 flex justify-between items-center active:bg-gray-700 transition";
+                    div.innerHTML = `
+                        <div class="overflow-hidden pr-2">
+                            <div class="font-bold text-white text-sm truncate">${subject}</div>
+                            <div class="text-xs text-gray-400 truncate">${from}</div>
+                            <div class="text-[10px] text-blue-400 mt-1">${date}</div>
+                        </div>
+                        <a href="https://mail.google.com/mail/u/0/#inbox/${message.id}" target="_blank" class="bg-blue-600/20 p-2 rounded-full text-blue-400">
+                            <span class="material-icons text-lg">open_in_new</span>
+                        </a>
+                    `;
+                    emailListDiv.appendChild(div);
+                }
+                showToast('Busca concluída!');
+            } catch (err) {
+                console.error(err);
+                alert('Erro: ' + err.message);
+                document.getElementById('authBtn').innerHTML = `Tentar Novamente`;
+            }
+        }
+    </script>
+</body>
+</html>
