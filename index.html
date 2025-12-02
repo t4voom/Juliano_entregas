@@ -229,7 +229,7 @@
                 </div>
 
                 <p class="mb-8 text-sm leading-relaxed text-gray-400">
-                    Gera um **único** arquivo Excel consolidado, separando os dados dos grupos (1, 2 e 3) em colunas lado a lado, com totais diários e colunas G e N vazias.
+                    Gera um **único** arquivo Excel consolidado, separando os dados dos grupos (1, 2 e 3) em colunas lado a lado, com totais diários e colunas G e N vazias, **agora com formatação profissional**.
                 </p>
                 
                 <button onclick="generateExcel()" class="flex items-center justify-center w-full gap-3 px-8 py-4 font-bold text-white transition rounded-xl bg-green-600 hover:bg-green-500 active:bg-green-700 shadow-lg shadow-green-900/40">
@@ -284,7 +284,7 @@
             <span id="toastMsg" class="text-xs text-gray-300">Operação realizada</span>
         </div>
     </div>
-    
+
     <div id="summaryModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div class="w-full max-w-sm p-6 transition-all transform border rounded-2xl shadow-2xl bg-decanter-dark border-gray-700 scale-100">
             <div class="flex items-start justify-between mb-4">
@@ -293,10 +293,8 @@
                     <span class="material-icons">close</span>
                 </button>
             </div>
-            
             <p class="mb-1 text-sm text-gray-400">Data Selecionada</p>
             <p class="pb-2 mb-6 text-lg font-bold text-white border-b border-gray-700" id="summaryDate">--/--/----</p>
-            
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="p-3 rounded-lg bg-gray-800">
                     <span class="text-xs uppercase text-gray-400">Total KM</span>
@@ -307,95 +305,115 @@
                     <p class="text-xl font-bold text-green-400" id="summaryVal">R$ 0,00</p>
                 </div>
             </div>
-            
             <div class="mb-4 text-xs text-center text-gray-500">
                 Este é apenas um resumo visual. Os dados continuam salvos no histórico.
             </div>
-
-            <button onclick="document.getElementById('summaryModal').classList.add('hidden')" class="w-full py-3 font-bold text-white transition rounded-xl bg-blue-600 hover:bg-blue-500">
-                OK, Fechar
+            <button onclick="document.getElementById('summaryModal').classList.add('hidden')" class="flex items-center justify-center w-full gap-2 px-6 py-3 font-bold text-white transition transform rounded-xl bg-blue-600 active:bg-blue-700 shadow-lg shadow-blue-900/50 active:scale-[0.98]">
+                Entendi
             </button>
         </div>
     </div>
+    
 
     <script>
-        // --- 1. CONFIGURAÇÃO INICIAL ---
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('data').value = today;
-        document.getElementById('excelStart').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]; // Dia 1 do mês atual
-        document.getElementById('excelEnd').value = today;
+        // --- 1. FUNÇÕES GERAIS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
 
-        function showToast(msg) {
+            document.querySelectorAll('.nav-btn, .nav-desk-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'shadow-blue-900/50');
+                btn.classList.add('text-gray-400', 'hover:bg-gray-800', 'hover:text-white');
+            });
+
+            if (tabId === 'page-add') {
+                const addBtn = document.querySelector('.nav-btn:nth-child(1)');
+                const deskAddBtn = document.querySelector('.nav-desk-btn:nth-child(1)');
+                addBtn.classList.add('active');
+                deskAddBtn.classList.remove('text-gray-400', 'hover:bg-gray-800', 'hover:text-white');
+                deskAddBtn.classList.add('bg-blue-600', 'shadow-lg', 'shadow-blue-900/50');
+            } else if (tabId === 'page-list') {
+                const listBtn = document.querySelector('.nav-btn:nth-child(2)');
+                const deskListBtn = document.querySelector('.nav-desk-btn:nth-child(2)');
+                listBtn.classList.add('active');
+                deskListBtn.classList.add('active');
+            } else if (tabId === 'page-excel') {
+                const excelBtn = document.querySelector('.nav-btn:nth-child(3)');
+                const deskExcelBtn = document.querySelector('.nav-desk-btn:nth-child(3)');
+                excelBtn.classList.add('active');
+                deskExcelBtn.classList.add('active');
+            }
+            
+            // Recarrega a lista quando for para a aba de histórico/listagem
+            if (tabId === 'page-list') {
+                renderList();
+            }
+        }
+
+        function showToast(message) {
             const toast = document.getElementById('toast');
-            document.getElementById('toastMsg').textContent = msg;
+            const toastMsg = document.getElementById('toastMsg');
+            
+            toastMsg.innerText = message;
             toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
             setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
                 toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
             }, 3000);
         }
 
-        // --- 2. NAVEGAÇÃO ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            // Mobile Nav
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active', 'text-blue-500');
-                btn.classList.add('text-gray-400');
-            });
-            
-            // Mapeamento atualizado (3 botões)
-            const iconMap = { 'page-add': 0, 'page-list': 1, 'page-excel': 2 }; 
-            const activeIndex = iconMap[tabId];
-            const mobileBtns = document.querySelectorAll('.nav-btn');
-            if(mobileBtns[activeIndex]) {
-                mobileBtns[activeIndex].classList.add('active', 'text-blue-500');
-                mobileBtns[activeIndex].classList.remove('text-gray-400');
-            }
-
-            // Desktop Nav
-            document.querySelectorAll('.nav-desk-btn').forEach(btn => {
-                btn.className = "nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition text-gray-400 hover:bg-gray-800 hover:text-white";
-            });
-            const deskBtns = document.querySelectorAll('.nav-desk-btn');
-            if(deskBtns[activeIndex]) {
-                deskBtns[activeIndex].className = "nav-desk-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-bold";
-            }
-            
-            if(tabId === 'page-list') renderList();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // --- 3. LÓGICA DE CADASTRO (Mantida com localStorage) ---
         function toggleOutros() {
-            const select = document.getElementById('local');
-            const input = document.getElementById('localOutros');
-            if (select.value === 'Outros') {
-                input.classList.remove('hidden');
-                setTimeout(() => input.focus(), 100);
+            const local = document.getElementById('local').value;
+            const localOutros = document.getElementById('localOutros');
+            if (local === 'Outros') {
+                localOutros.classList.remove('hidden');
+                localOutros.setAttribute('required', 'true');
             } else {
-                input.classList.add('hidden');
+                localOutros.classList.add('hidden');
+                localOutros.removeAttribute('required');
             }
         }
+
+        // --- 2. SALVAR DADOS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('data').value = today;
+            
+            document.getElementById('excelStart').value = today;
+            document.getElementById('excelEnd').value = today;
+
+            renderList(); // Carrega a lista ao iniciar
+            updateSidebarTotal();
+        });
 
         document.getElementById('deliveryForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const localSelect = document.getElementById('local').value;
-            const localFinal = localSelect === 'Outros' ? document.getElementById('localOutros').value : localSelect;
-            if(!localFinal) { alert('Digite o local!'); return; }
+            
+            let localFinal = document.getElementById('local').value;
+            if (localFinal === 'Outros') {
+                localFinal = document.getElementById('localOutros').value.trim();
+            }
+
+            if (document.getElementById('local').value === 'Outros' && !localFinal) {
+                alert('Por favor, preencha o campo do local!');
+                return;
+            }
 
             const entrega = {
                 id: Date.now(),
                 data: document.getElementById('data').value,
                 local: localFinal,
-                destino: document.getElementById('destino').value,
+                destino: document.getElementById('destino').value.trim(),
                 km: parseFloat(document.getElementById('km').value),
                 valor: parseFloat(document.getElementById('valor').value),
-                obs: document.getElementById('obs').value,
-                paraQuem: document.getElementById('paraQuem').value 
+                obs: document.getElementById('obs').value.trim(),
+                paraQuem: document.getElementById('paraQuem').value
             };
-
+            
             if (!entrega.paraQuem) {
                 alert('Selecione o campo "Para Quem"!');
                 return;
@@ -404,14 +422,18 @@
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
             entregas.push(entrega);
             localStorage.setItem('entregasDecanter', JSON.stringify(entregas));
-
+            
             showToast('Entrega salva!');
+            
             this.reset();
             document.getElementById('data').value = today;
             document.getElementById('local').value = 'Entrega';
-            document.getElementById('paraQuem').value = ''; 
+            document.getElementById('paraQuem').value = '';
             toggleOutros();
+
             if(navigator.vibrate) navigator.vibrate(50);
+            updateSidebarTotal();
+            renderList(); // Atualiza a lista após salvar
         });
 
         // --- 3.1 RESUMO DO DIA (FECHAR DIA) ---
@@ -424,76 +446,67 @@
             
             const totalKm = todayEntregas.reduce((sum, item) => sum + item.km, 0);
             const totalVal = todayEntregas.reduce((sum, item) => sum + item.valor, 0);
-            
+
             document.getElementById('summaryDate').innerText = new Date(selectedDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
             document.getElementById('summaryKm').innerText = totalKm.toFixed(1) + ' km';
             document.getElementById('summaryVal').innerText = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             
             document.getElementById('summaryModal').classList.remove('hidden');
         }
-        
-        // --- 4. FUNÇÃO PARA EXCLUIR ITEM (NOVO) ---
-        function deleteDelivery(id) {
-            if (!confirm('Tem certeza que deseja EXCLUIR permanentemente esta entrega?')) {
-                return;
-            }
 
+        // --- 4. FUNÇÃO PARA EXCLUIR ITEM ---
+        function deleteDelivery(id) {
+            if (!confirm("Tem certeza que deseja excluir esta entrega?")) return;
+            
             let entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+            entregas = entregas.filter(e => e.id !== id);
+            localStorage.setItem('entregasDecanter', JSON.stringify(entregas));
             
-            // Filtra a lista, mantendo apenas itens com ID diferente do que será excluído
-            const newEntregas = entregas.filter(item => item.id !== id);
-            
-            localStorage.setItem('entregasDecanter', JSON.stringify(newEntregas));
-            
+            showToast('Entrega excluída!');
             renderList();
-            showToast('Entrega excluída.');
+            updateSidebarTotal();
         }
 
-        // --- 5. LÓGICA DE LISTAGEM (AGRUPADO POR DATA) ---
+        function deleteAll() {
+            if (!confirm("VOCÊ TEM CERTEZA? Isso apagará todas as entregas salvas!")) return;
+            localStorage.removeItem('entregasDecanter');
+            showToast('Histórico limpo!');
+            renderList();
+            updateSidebarTotal();
+        }
+        
+        // --- 5. RENDERIZAÇÃO DA LISTA ---
         function renderList() {
-            const mobileList = document.getElementById('mobileList');
-            const desktopBody = document.getElementById('desktopTableBody');
-            const emptyState = document.getElementById('emptyState');
-            const totalCount = document.getElementById('totalCount');
-            const sidebarTotal = document.getElementById('sidebarTotal');
-            
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
             
+            document.getElementById('totalCount').innerText = `${entregas.length} entregas salvas`;
+            
+            const mobileList = document.getElementById('mobileList');
+            const desktopTableBody = document.getElementById('desktopTableBody');
             mobileList.innerHTML = '';
-            desktopBody.innerHTML = '';
+            desktopTableBody.innerHTML = '';
 
             if (entregas.length === 0) {
-                emptyState.classList.remove('hidden');
-                totalCount.innerText = "0 registros";
-                sidebarTotal.innerText = "R$ 0,00";
+                document.getElementById('emptyState').classList.remove('hidden');
                 return;
-            } else {
-                emptyState.classList.add('hidden');
             }
+            document.getElementById('emptyState').classList.add('hidden');
 
-            // Ordenar: Mais recente primeiro
-            entregas.sort((a, b) => new Date(b.data) - new Date(a.data));
-            
-            let totalValueOverall = 0;
-            
-            // Agrupar por data
-            const grouped = entregas.reduce((groups, item) => {
-                const date = item.data;
-                if (!groups[date]) groups[date] = [];
-                groups[date].push(item);
-                return groups;
-            }, {});
+            // Agrupa por data (garantindo que seja UTC para a data ser consistente)
+            const groupedByDate = entregas.sort((a, b) => new Date(b.data + 'T00:00:00Z') - new Date(a.data + 'T00:00:00Z'))
+                                        .reduce((acc, item) => {
+                                            if (!acc[item.data]) {
+                                                acc[item.data] = [];
+                                            }
+                                            acc[item.data].push(item);
+                                            return acc;
+                                        }, {});
 
-            // Ordenar chaves das datas (descrescente)
-            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
-
-            sortedDates.forEach(date => {
-                const items = grouped[date];
-                const dayTotalKm = items.reduce((sum, i) => sum + i.km, 0);
-                const dayTotalVal = items.reduce((sum, i) => sum + i.valor, 0);
-                totalValueOverall += dayTotalVal;
-
-                const dateFmt = new Date(date).toLocaleDateString('pt-BR', {timeZone: 'UTC', weekday: 'short', day: '2-digit', month: '2-digit'});
+            // Renderiza a lista móvel
+            for (const date in groupedByDate) {
+                const items = groupedByDate[date];
+                const dayTotalVal = items.reduce((sum, item) => sum + item.valor, 0);
+                const dateFmt = new Date(date + 'T00:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit'});
 
                 // --- MOBILE RENDER (Group Header) ---
                 const groupDiv = document.createElement('div');
@@ -506,11 +519,11 @@
                         </div>
                     </div>
                 `;
-                
+                mobileList.appendChild(groupDiv);
+
                 items.forEach(item => {
                     const card = document.createElement('div');
-                    card.className = "mobile-card mb-2"; 
-                    // Cartão Mobile com botão de exclusão
+                    card.className = "mobile-card mb-2"; // Cartão Mobile com botão de exclusão
                     card.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex-grow">
@@ -523,68 +536,53 @@
                                     <div class="flex items-center gap-1"><span class="material-icons text-sm text-orange-500">speed</span> ${item.km} km</div>
                                     <div class="flex items-center gap-1 text-yellow-400 font-bold">#${item.paraQuem}</div>
                                 </div>
+                                ${item.obs ? `<p class="mt-2 text-xs text-gray-500 italic">Obs: ${item.obs}</p>` : ''}
                             </div>
-                            <button onclick="deleteDelivery(${item.id})" class="ml-4 p-1.5 rounded-full bg-red-900/50 text-red-300 transition hover:bg-red-800/70 active:scale-90 flex-shrink-0">
-                                <span class="material-icons text-xl">delete</span>
+                            <button onclick="deleteDelivery(${item.id})" class="text-red-500/70 hover:text-red-400 ml-4 p-1 rounded-full active:scale-95 transition">
+                                <span class="material-icons text-xl">close</span>
                             </button>
                         </div>
                     `;
-                    groupDiv.appendChild(card);
+                    mobileList.appendChild(card);
                 });
                 
-                // Divisor visual no mobile
-                groupDiv.appendChild(document.createElement('hr')).className = "border-gray-800 my-4";
-                mobileList.appendChild(groupDiv);
+                // Adiciona um espaço extra entre os grupos de dias no mobile
+                const spacer = document.createElement('div');
+                spacer.className = "h-4";
+                mobileList.appendChild(spacer);
+            }
 
-                // --- DESKTOP RENDER ---
-                // Row Header
-                const trHead = document.createElement('tr');
-                trHead.className = "bg-gray-800/80";
-                // colspan ajustado para 7 colunas (Data, Origem, Destino, KM, Valor, Obs, Ação)
-                trHead.innerHTML = `
-                    <td colspan="7" class="p-2 pl-4 text-xs font-bold text-blue-300 uppercase tracking-wider">
-                        ${dateFmt} — Total: ${dayTotalVal.toLocaleString('pt-BR', {timeStyle: 'UTC', style: 'currency', currency: 'BRL'})} | ${dayTotalKm.toFixed(1)} km
+            // Renderiza a tabela desktop
+            entregas.forEach(item => {
+                const row = desktopTableBody.insertRow();
+                row.className = "hover:bg-gray-800 transition";
+                row.innerHTML = `
+                    <td class="p-4">${new Date(item.data + 'T00:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit'})}</td>
+                    <td class="p-4">${item.local} / <span class="text-yellow-400 font-bold">#${item.paraQuem}</span></td>
+                    <td class="p-4 text-gray-300">${item.destino}</td>
+                    <td class="p-4 text-right text-blue-400">${item.km.toFixed(1).replace('.', ',')} km</td>
+                    <td class="p-4 text-right text-green-400 font-bold">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-4 text-xs text-gray-500">${item.obs || '-'}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteDelivery(${item.id})" class="text-red-500/70 hover:text-red-400 p-1 rounded-full active:scale-95 transition">
+                            <span class="material-icons text-xl">delete</span>
+                        </button>
                     </td>
                 `;
-                desktopBody.appendChild(trHead);
-
-                items.forEach(item => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-700/50 transition border-b border-gray-700/30";
-                    // Linha da tabela desktop
-                    tr.innerHTML = `
-                        <td class="p-3 text-gray-500 text-sm">${new Date(item.data).toLocaleDateString('pt-BR', {timeZone: 'UTC', day: '2-digit', month: '2-digit'})}</td>
-                        <td class="p-3 text-blue-400 text-sm">${item.local} - (<span class="text-yellow-400 font-bold">#${item.paraQuem}</span>)</td>
-                        <td class="p-3 text-gray-300 font-medium text-sm">${item.destino}</td>
-                        <td class="p-3 text-right text-gray-400 text-sm">${item.km}</td>
-                        <td class="p-3 text-right text-green-400 font-mono font-bold text-sm">${item.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
-                        <td class="p-3 text-gray-500 text-xs italic max-w-xs truncate">${item.obs || ''}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="deleteDelivery(${item.id})" class="p-1 rounded-full bg-red-900/50 text-red-300 transition hover:bg-red-800/70 active:scale-90">
-                                <span class="material-icons text-base">delete</span>
-                            </button>
-                        </td>
-                    `;
-                    desktopBody.appendChild(tr);
-                });
             });
-
-            const totalFmt = totalValueOverall.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            totalCount.innerText = `${entregas.length} entregas • Geral: ${totalFmt}`;
-            if(sidebarTotal) sidebarTotal.innerText = totalFmt;
-        }
-
-        function deleteAll() {
-            if(confirm('Apagar TUDO? Esta ação é irreversível.')) {
-                localStorage.removeItem('entregasDecanter');
-                renderList();
-                showToast('Histórico limpo com sucesso.');
-            }
         }
         
-        // --- FUNÇÃO AUXILIAR PARA FORMATAR VALOR EM REAL ---
+        function updateSidebarTotal() {
+             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+             const totalVal = entregas.reduce((sum, item) => sum + item.valor, 0);
+             document.getElementById('sidebarTotal').innerText = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+
+        // --- 6. FUNÇÕES PARA EXCEL ---
+
+        // Função auxiliar para formatar o valor monetário BRL (mantém a vírgula para o Excel)
         function formatCurrencyBRL(value) {
-            if (typeof value !== 'number') return value;
             // Garante que o número não tenha separador de milhares indesejado no Excel
             return value.toFixed(2).replace('.', ','); 
         }
@@ -597,18 +595,27 @@
             return new Date(dateStr + 'T00:00:00Z');
         }
 
-        // --- 6. EXCEL AVANÇADO (CORRIGIDO PARA O LAYOUT SEPARADO POR PLANILHA) ---
+
+        // --- 7. EXCEL AVANÇADO (CORRIGIDO E COM FORMATAÇÃO BONITA) ---
         function generateExcel() {
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
-            if (entregas.length === 0) { showToast("Nada para exportar."); return; }
+            
+            if (entregas.length === 0) {
+                showToast("Nada para exportar.");
+                return;
+            }
 
             const startStr = document.getElementById('excelStart').value;
             const endStr = document.getElementById('excelEnd').value;
             
-            if(!startStr || !endStr) { alert("Selecione as datas."); return; }
-            
+            if(!startStr || !endStr) {
+                alert("Selecione as datas.");
+                return;
+            }
+
             const startDateObj = parseDateAsUTC(startStr);
             let endDateObj = parseDateAsUTC(endStr);
+            // Adiciona 1 dia à data final para incluir o dia inteiro no filtro
             endDateObj.setUTCDate(endDateObj.getUTCDate() + 1); 
 
             const targets = ['1', '2', '3'];
@@ -616,53 +623,44 @@
             // 1. Filtrar por data
             const filtered = entregas.filter(e => {
                 const entryDateObj = parseDateAsUTC(e.data);
-                return entryDateObj >= startDateObj && entryDateObj < endDateObj; 
+                return entryDateObj >= startDateObj && entryDateObj < endDateObj;
             });
+            
+            if (filtered.length === 0) {
+                 showToast("Nenhuma entrega encontrada no período selecionado.");
+                 return;
+            }
 
-            if(filtered.length === 0) { showToast("Nenhuma entrega neste período."); return; }
-
-            // 2. Coletar datas únicas e Agrupar por data E por 'paraQuem'.
-            const groupedData = filtered.reduce((acc, item) => {
-                const target = item.paraQuem;
-                
-                // Ignora entradas sem Target válido
-                if (!targets.includes(target)) {
-                    return acc;
-                }
-                
-                // Agrupar por Data para o detalhe diário
-                if (!acc.byDate) acc.byDate = {};
-                if (!acc.byDate[item.data]) acc.byDate[item.data] = {};
-                if (!acc.byDate[item.data][target]) acc.byDate[item.data][target] = [];
-                acc.byDate[item.data][target].push(item);
-
-                // Calcular Somatórios Gerais por Target (1, 2, 3)
-                if (!acc.grandTotals) acc.grandTotals = { '1': { km: 0, val: 0 }, '2': { km: 0, val: 0 }, '3': { km: 0, val: 0 } };
-                acc.grandTotals[target].km += item.km;
-                acc.grandTotals[target].val += item.valor;
-                
+            // 2. Agrupar por data e por Target
+            const itemsGroupedByDate = filtered.reduce((acc, item) => {
+                if (!acc[item.data]) acc[item.data] = {};
+                if (!acc[item.data][item.paraQuem]) acc[item.data][item.paraQuem] = [];
+                acc[item.data][item.paraQuem].push(item);
                 return acc;
             }, {});
-            
-            // Coleta e ordena todas as datas que têm entregas dentro do filtro
-            const allDates = [...new Set(filtered.map(e => e.data))].sort((a, b) => new Date(a) - new Date(b));
-            const itemsGroupedByDate = groupedData.byDate || {};
-            const grandTotals = groupedData.grandTotals || { '1': { km: 0, val: 0 }, '2': { km: 0, val: 0 }, '3': { km: 0, val: 0 } };
-            
-            // 3. Montar o Array Final de Arrays (AoA) linha por linha
-            const finalAoa = [];
 
+            // 3. Obter todas as datas únicas e ordenadas
+            const allDates = Object.keys(itemsGroupedByDate).sort();
+
+            const finalAoa = []; // Array of Arrays (Array de Dados)
+            let grandTotal = { km: 0, val: 0 };
+            
+            let currentRowForAoa = 2; // Começa após o cabeçalho (Linhas 0 e 1)
+
+            // 4. Loop por dia
             allDates.forEach(date => {
                 const itemsByTarget = itemsGroupedByDate[date];
 
-                // Calcular totais diários por target
+                // Calcular totais diários por target (usado no próximo bloco de correção)
                 const dailyTotals = {};
                 targets.forEach(t => {
                     const items = itemsByTarget[t] || [];
-                    dailyTotals[t] = {
-                        km: items.reduce((sum, i) => sum + i.km, 0),
-                        val: items.reduce((sum, i) => sum + i.valor, 0)
+                    dailyTotals[t] = { 
+                        km: items.reduce((sum, i) => sum + i.km, 0), 
+                        val: items.reduce((sum, i) => sum + i.valor, 0) 
                     };
+                    grandTotal.km += dailyTotals[t].km;
+                    grandTotal.val += dailyTotals[t].val;
                 });
 
                 // Acha o Target com o maior número de entradas para alinhamento horizontal
@@ -671,14 +669,14 @@
                     (itemsByTarget['2'] || []).length,
                     (itemsByTarget['3'] || []).length
                 );
-                
+
                 // 1. Loop para colocar as Entregas (Alinhamento Horizontal)
                 for (let i = 0; i < maxEntries; i++) {
                     const row = [];
                     targets.forEach((target, index) => {
                         const items = itemsByTarget[target] || [];
                         const item = items[i]; // Tenta pegar a i-ésima entrega
-
+                        
                         if (item) {
                             // Dados da entrega formatados
                             row.push(
@@ -690,89 +688,106 @@
                                 item.obs
                             );
                         } else {
-                            // Linhas vazias se não houver mais entregas neste Target (Mantendo alinhamento)
-                            row.push("", "", "", "", "", "");
+                            // Células vazias para alinhamento
+                            row.push('', '', '', '', '', ''); 
                         }
                         
-                        // Adiciona o separador (G e N)
+                        // Coluna de separação G ou N
                         if (index < targets.length - 1) {
-                            row.push("");
+                            row.push(""); 
                         }
                     });
-                    
-                    // Garante que a linha só é adicionada se tiver conteúdo em qualquer Target
-                    if (row.some(cell => cell !== "")) { 
-                         finalAoa.push(row);
-                    }
+                    finalAoa.push(row);
+                    currentRowForAoa++;
                 }
 
-                // 2. Adicionar uma Linha ÚNICA de TOTAL DIA (Alinhamento Horizontal)
-                const totalRow = [];
-                targets.forEach((target, index) => {
+
+                // --- 2. NOVO BLOCO DE CÁLCULO E INSERÇÃO DE TOTAL DIA (CORRIGIDO) ---
+                // Colunas de referência para cada Target
+                const targetCols = { 
+                    // Total (col 2, 9, 16) | KM (col 3, 10, 17) | Valor (col 4, 11, 18)
+                    1: { totalCellCol: 2, totalKmCol: 3, totalValorCol: 4 }, 
+                    2: { totalCellCol: 9, totalKmCol: 10, totalValorCol: 11 }, 
+                    3: { totalCellCol: 16, totalKmCol: 17, totalValorCol: 18 } 
+                };
+
+                const totalRow = new Array(20).fill('');
+                let hasAnyDeliveryOnDay = false;
+                
+                // Montar a linha de total consolidada (usando dailyTotals previamente calculado)
+                targets.forEach(target => {
                     const total = dailyTotals[target];
-                    // Preenche o bloco com o Total Diário Específico daquele Target
-                    totalRow.push(
-                        "",
-                        "",
-                        `TOTAL DIA #${target}`, // Coluna do Destino (Alinhado)
-                        total.km.toFixed(1).replace('.', ','),
-                        formatCurrencyBRL(total.val),
-                        ""
-                    );
-                    if (index < targets.length - 1) {
-                        totalRow.push("");
+                    const km = total.km;
+                    const valor = total.val;
+                    
+                    // Usa o target como chave para targetCols
+                    const { totalCellCol, totalKmCol, totalValorCol } = targetCols[parseInt(target)];
+
+                    // **CORREÇÃO para o problema: Não mostrar se KM e Valor são 0**
+                    if (km > 0 || valor > 0) {
+                        hasAnyDeliveryOnDay = true;
+                        
+                        // Célula TOTAL DIA #X (Ex: C3, J3, Q3)
+                        totalRow[totalCellCol] = `TOTAL DIA #${target}`; 
+                        
+                        // Valores KM e Valor formatados
+                        totalRow[totalKmCol] = km.toFixed(1).replace('.', ','); 
+                        totalRow[totalValorCol] = formatCurrencyBRL(valor); 
                     }
                 });
-                finalAoa.push(totalRow);
-                
-                // Linha em branco para SEPARAR um dia do outro (Visual)
-                // 20 Colunas (6 para T1 + 1 Separador + 6 para T2 + 1 Separador + 6 para T3)
-                finalAoa.push(new Array(20).fill("")); 
+
+                // **CORREÇÃO para o problema: Linha sendo pulada & Layout**
+                // Adiciona a linha de total (e a linha vazia seguinte) apenas se houver alguma entrega no dia.
+                if (hasAnyDeliveryOnDay) {
+                    finalAoa.push(totalRow);
+                    // Adiciona uma linha vazia para separar os dias, seguindo o padrão do seu layout.
+                    finalAoa.push(new Array(20).fill('')); 
+                    currentRowForAoa += 2;
+                }
+                // --- FIM DO NOVO BLOCO ---
+
+
             }); // Fim do allDates.forEach
 
-            // 4. Adicionar a Linha de SOMATÓRIO GERAL (Grand Total por Target)
-            finalAoa.push(new Array(20).fill("")); // Linha em branco
-            finalAoa.push(new Array(20).fill("")); // Linha em branco
 
+            // 4. Linha do Somatório Geral
             const grandTotalRow = [];
             targets.forEach((target, index) => {
-                const total = grandTotals[target];
-                // Preenche o bloco com o Somatório Geral Específico daquele Target
                 grandTotalRow.push(
-                    "",             
-                    "",             
-                    `SOMATÓRIO GERAL #${target}`, // Destino (Alinhado)
-                    total.km.toFixed(1).replace('.', ','),          
-                    formatCurrencyBRL(total.val),         
-                    ""              
+                    target,
+                    "",
+                    "SOMATÓRIO GERAL",
+                    grandTotal.km.toFixed(1).replace('.', ','),
+                    formatCurrencyBRL(grandTotal.val),
+                    ""
                 );
                 if (index < targets.length - 1) {
                     grandTotalRow.push("");
                 }
             });
             finalAoa.push(grandTotalRow);
-            
+            currentRowForAoa++;
             finalAoa.push(new Array(20).fill("")); // Duas linhas em branco no final
             finalAoa.push(new Array(20).fill(""));
+
 
             // 5. Montar o cabeçalho (Duas linhas)
             const titleRow = [
                 "1", "", "", "", "", "", // Target 1 (Col A-F)
-                "",                      // Separador G
+                "", // Separador G
                 "2", "", "", "", "", "", // Target 2 (Col H-M)
-                "",                      // Separador N
-                "3", "", "", "", "", ""  // Target 3 (Col O-T)
+                "", // Separador N
+                "3", "", "", "", "", "" // Target 3 (Col O-T)
             ];
-
+            
             const columnHeaders = [
                 "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs", // 6 cols
                 "", // Separador G
                 "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs", // 6 cols
                 "", // Separador N
-                "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs"  // 6 cols
+                "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs" // 6 cols
             ];
 
-            // Junta cabeçalhos e dados
             const aoaWithHeaders = [
                 titleRow,
                 columnHeaders,
@@ -784,29 +799,201 @@
             
             // 7. Mesclar células para os títulos (1, 2, 3)
             if (!ws['!merges']) ws['!merges'] = [];
+            // Merge "1" over A1:F1
             ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }); 
+            // Merge "2" over H1:M1 (H é a coluna 7, M é a 12)
             ws['!merges'].push({ s: { r: 0, c: 7 }, e: { r: 0, c: 12 } });
+            // Merge "3" over O1:T1 (O é a coluna 14, T é a 19)
             ws['!merges'].push({ s: { r: 0, c: 14 }, e: { r: 0, c: 19 } });
 
-            // Largura das colunas (20 colunas no total)
+            // 8. Aplicar Estilos
+            const headerFill = { fgColor: { rgb: "1E293B" } }; // Slate 800
+            const blueFill = { fgColor: { rgb: "2563EB" } }; // Blue 600
+            const greenFill = { fgColor: { rgb: "16A34A" } }; // Green 600
+            const blackFill = { fgColor: { rgb: "0F172A" } }; // Slate 900
+            const whiteFont = { color: { rgb: "FFFFFF" }, bold: true };
+            const headerFont = { color: { rgb: "94A3B8" }, bold: true, sz: 10 }; // Gray 400
+
+            // Aplicar estilos ao Título (Row 1)
+            [0, 7, 14].forEach(c => {
+                 const cellRef = XLSX.utils.encode_cell({ r: 0, c: c });
+                 const cell = ws[cellRef];
+                 if (cell) {
+                    cell.s = { 
+                        font: whiteFont, 
+                        fill: blueFill, 
+                        alignment: { horizontal: 'center', vertical: 'center' } 
+                    };
+                 }
+            });
+            
+            // Aplicar estilos ao sub-cabeçalho (Row 2)
+            for (let c = 0; c < 20; c++) {
+                const cellRef = XLSX.utils.encode_cell({ r: 1, c: c });
+                const cell = ws[cellRef];
+                if (cell) {
+                    // Colunas Data/Origem/Destino/Obs - Esquerda
+                    if (c === 0 || c === 1 || c === 2 || c === 5 || c === 7 || c === 8 || c === 9 || c === 12 || c === 14 || c === 15 || c === 16 || c === 19) {
+                        cell.s = { font: headerFont, fill: headerFill, alignment: { horizontal: 'left' } };
+                    } 
+                    // Colunas KM/Valor - Direita
+                    else if (c === 3 || c === 4 || c === 10 || c === 11 || c === 17 || c === 18) {
+                        cell.s = { font: headerFont, fill: headerFill, alignment: { horizontal: 'right' } };
+                    }
+                    // Separador G e N
+                    else if (c === 6 || c === 13) {
+                        cell.s = { fill: blackFill };
+                    }
+                }
+            }
+
+
+            // Aplicar estilos às linhas de dados (A partir da Row 3 - index 2)
+            // Lógica de zebra e formatação de números
+            for (let r = 2; r < aoaWithHeaders.length; r++) {
+                // Checa se é a linha de Somatório Geral para não aplicar o estilo de dados
+                if (aoaWithHeaders[r][2] && aoaWithHeaders[r][2].includes("SOMATÓRIO GERAL")) {
+                    continue;
+                }
+                
+                // Checa se a linha é o TOTAL DIA (o campo de destino/coluna C, J ou Q começa com "TOTAL DIA")
+                const isTotalRow = aoaWithHeaders[r][2] && aoaWithHeaders[r][2].startsWith("TOTAL DIA #");
+                
+                // Itera por todos os targets para aplicar estilos
+                targets.forEach((_, index) => {
+                    const startCol = index * 7;
+                    const kmCol = startCol + 3;
+                    const valorCol = startCol + 4;
+                    
+                    // Preenchimento de fundo zebra (exceto nas linhas de total)
+                    const fill = r % 2 === 1 && !isTotalRow ? { fgColor: { rgb: "1E293B" } } : undefined;
+                    
+                    // Aplica estilo a KM (Coluna 4, 11, 18)
+                    const kmCellRef = XLSX.utils.encode_cell({ r: r, c: kmCol });
+                    if (ws[kmCellRef]) {
+                        if (!ws[kmCellRef].s) ws[kmCellRef].s = {};
+                        ws[kmCellRef].s.alignment = { horizontal: 'right' };
+                        ws[kmCellRef].s.fill = fill;
+                    }
+
+                    // Aplica estilo a Valor (Coluna 5, 12, 19)
+                    const valorCellRef = XLSX.utils.encode_cell({ r: r, c: valorCol });
+                    if (ws[valorCellRef]) {
+                        if (!ws[valorCellRef].s) ws[valorCellRef].s = {};
+                        ws[valorCellRef].s.alignment = { horizontal: 'right' };
+                        ws[valorCellRef].s.fill = fill;
+                    }
+                    
+                    // Aplica preenchimento zebra nas colunas de texto (Data, Origem, Destino, Obs)
+                    for(let c = startCol; c < startCol + 6; c++) {
+                        // Não aplica o fill nas colunas KM e Valor, pois já foi feito acima
+                        if(c === kmCol || c === valorCol) continue; 
+                        
+                        const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                        if (ws[cellRef]) {
+                             if (!ws[cellRef].s) ws[cellRef].s = {};
+                             ws[cellRef].s.fill = fill;
+                        }
+                    }
+
+                    // Se for linha de TOTAL DIA, aplica estilo especial
+                    if (isTotalRow) {
+                        const totalDestinoCol = startCol + 2;
+                        
+                        // Estilo de preenchimento da linha de Total Dia (exceto Separador)
+                        for(let c = startCol; c <= startCol + 5; c++) {
+                            const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                            if (ws[cellRef]) {
+                                if (!ws[cellRef].s) ws[cellRef].s = {};
+                                ws[cellRef].s.font = whiteFont;
+                                ws[cellRef].s.fill = headerFill;
+                            }
+                        }
+                        
+                        // Alinhamento para "TOTAL DIA #X"
+                        ws[XLSX.utils.encode_cell({ r: r, c: totalDestinoCol })].s.alignment = { horizontal: 'center' };
+                        // Alinhamento para KM e Valor
+                        ws[XLSX.utils.encode_cell({ r: r, c: kmCol })].s.alignment = { horizontal: 'right' };
+                        ws[XLSX.utils.encode_cell({ r: r, c: valorCol })].s.alignment = { horizontal: 'right' };
+                    }
+                    
+                    // Separador G e N (Coluna 6, 13)
+                    const sepCol = startCol + 6;
+                    const sepCellRef = XLSX.utils.encode_cell({ r: r, c: sepCol });
+                    if(ws[sepCellRef]) {
+                         if (!ws[sepCellRef].s) ws[sepCellRef].s = {};
+                         ws[sepCellRef].s.fill = blackFill;
+                    }
+                });
+            }
+
+
+            // Aplicar estilos à linha do Somatório Geral (última linha com dados)
+            let grandTotalRowIndex = -1;
+            // Percorre de 2 (após cabeçalhos) para achar o Somatório Geral
+            for(let r = 2; r < aoaWithHeaders.length; r++) {
+                if(aoaWithHeaders[r][2] && aoaWithHeaders[r][2].includes("SOMATÓRIO GERAL")) {
+                    grandTotalRowIndex = r;
+                    break;
+                }
+            }
+
+            targets.forEach((_, index) => {
+                const startCol = index * 7;
+                const totalDestinoCol = startCol + 2;
+                const totalKMCol = startCol + 3;
+                const totalValorCol = startCol + 4;
+                const endCol = startCol + 5;
+                
+                // Estilo de preenchimento da linha do Somatório Geral
+                for(let c = startCol; c <= endCol; c++) {
+                    const cellRef = XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: c });
+                    if (ws[cellRef]) {
+                        if (!ws[cellRef].s) ws[cellRef].s = {};
+                        ws[cellRef].s.font = whiteFont;
+                        ws[cellRef].s.fill = greenFill;
+                    }
+                }
+                
+                // Alinhamento
+                ws[XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: totalDestinoCol })].s.alignment = { horizontal: 'center' };
+                ws[XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: totalKMCol })].s.alignment = { horizontal: 'right' };
+                ws[XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: totalValorCol })].s.alignment = { horizontal: 'right' };
+
+                // Separador G e N
+                const sepCol = startCol + 6;
+                const sepCellRef = XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: sepCol });
+                if(ws[sepCellRef]) {
+                     if (!ws[sepCellRef].s) ws[sepCellRef].s = {};
+                     ws[sepCellRef].s.fill = blackFill;
+                }
+            });
+
+            // 8. Largura das colunas (20 colunas no total)
             const wscols = [
                 { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 }, // Target 1 (A-F)
                 { wch: 2 }, // Separador G
                 { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 }, // Target 2 (H-M)
                 { wch: 2 }, // Separador N
-                { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 }  // Target 3 (O-T)
+                { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 } // Target 3 (O-T)
             ];
             ws['!cols'] = wscols;
 
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, `Relatorio Consolidado`);
-            
-            const fileName = `Relatorio_Consolidado_${startStr}_ate_${endStr}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            
-            showToast(`Baixando planilha consolidada...`);
-        }
 
+            // 9. Gerar e baixar o arquivo Excel
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Relatorio Consolidado");
+            
+            const startFmt = new Date(startDateObj).toLocaleDateString('pt-BR');
+            const endFmt = new Date(endDateObj.getUTCDate() - 1 === new Date(endDateObj).getUTCDate() ? endDateObj.setUTCDate(endDateObj.getUTCDate() - 1) && endDateObj : endDateObj.setUTCDate(endDateObj.getUTCDate() - 1) && endDateObj).toLocaleDateString('pt-BR');
+            
+            const filename = `Relatorio_Consolidado_${startFmt}_ate_${endFmt}.xlsx`;
+            
+            XLSX.writeFile(wb, filename);
+
+            showToast("Relatório gerado!");
+        }
+        
     </script>
 </body>
 </html>
