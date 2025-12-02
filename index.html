@@ -589,7 +589,15 @@
             return value.toFixed(2).replace('.', ','); 
         }
 
-        // --- 6. EXCEL AVANÇADO (Corrigido e Otimizado) ---
+        // NOVO: Função auxiliar para criar um objeto Date garantido em UTC
+        function parseDateAsUTC(dateStr) {
+            if (!dateStr) return null;
+            // 'YYYY-MM-DD' + 'T00:00:00Z' força o Date a ser criado como meia-noite UTC,
+            // eliminando problemas de fuso horário local e garantindo que o dia não seja perdido.
+            return new Date(dateStr + 'T00:00:00Z');
+        }
+
+        // --- 6. EXCEL AVANÇADO (CORRIGIDO) ---
         function generateExcel() {
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
             if (entregas.length === 0) { showToast("Nada para exportar."); return; }
@@ -599,15 +607,24 @@
             
             if(!startStr || !endStr) { alert("Selecione as datas."); return; }
             
-            // Adiciona 1 dia à data final para incluir o dia inteiro no filtro.
-            const endDateObj = new Date(endStr);
-            endDateObj.setDate(endDateObj.getDate() + 1); 
+            // NOVO: Usa a função UTC para garantir datas consistentes
+            const startDateObj = parseDateAsUTC(startStr);
+            let endDateObj = parseDateAsUTC(endStr);
+            
+            if (!startDateObj || !endDateObj) { alert("Erro ao processar datas."); return; }
+
+            // Adiciona 1 dia à data final (em UTC) para incluir o dia inteiro no filtro de exclusão (<)
+            endDateObj.setUTCDate(endDateObj.getUTCDate() + 1); 
 
             // 1. Filtrar por data
             const filtered = entregas.filter(e => {
-                const d = new Date(e.data);
-                // Filtra para pegar a data inicial até o final do dia da data final
-                return d >= new Date(startStr) && d < endDateObj; 
+                // NOVO: O objeto de comparação (data do registro) também deve ser criado em UTC
+                const entryDateObj = parseDateAsUTC(e.data);
+                
+                // Filtra para pegar a data inicial (inclusiva) até o final do dia da data final (exclusiva)
+                // Ex: Se o filtro for de 01/12 até 03/12, a comparação será:
+                // entryDateObj >= 01/12 (UTC) E entryDateObj < 04/12 (UTC)
+                return entryDateObj >= startDateObj && entryDateObj < endDateObj; 
             });
 
             if(filtered.length === 0) { showToast("Nenhuma entrega neste período."); return; }
