@@ -17,11 +17,11 @@
                 extend: {
                     colors: {
                         decanter: {
-                            black: '#0f172a', // Slate 900
-                            dark: '#1e293b',  // Slate 800
-                            surface: '#334155', // Slate 700
-                            blue: '#2563eb',  // Blue 600
-                            accent: '#3b82f6' // Blue 500
+                            black: '#0f172a', 
+                            dark: '#1e293b', 
+                            surface: '#334155', 
+                            blue: '#2563eb', 
+                            accent: '#3b82f6' 
                         }
                     },
                     padding: {
@@ -33,47 +33,17 @@
     </script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* Animações Suaves */
         .tab-content { display: none; opacity: 0; transition: opacity 0.2s ease-in-out; }
         .tab-content.active { display: block; opacity: 1; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(10px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
-        /* Input Styles Otimizados para Touch */
-        .input-field {
-            width: 100%;
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            color: white;
-            padding: 14px; /* Mais espaço para o dedo */
-            font-size: 16px; /* Evita zoom automático no iOS */
-            border-radius: 12px;
-            margin-bottom: 16px;
-            outline: none;
-            transition: all 0.2s;
-            appearance: none; /* Remove estilos nativos feios */
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-field { width: 100%; background-color: #1e293b; border: 1px solid #334155; color: white; padding: 14px; font-size: 16px; border-radius: 12px; margin-bottom: 16px; outline: none; transition: all 0.2s; appearance: none; }
         .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
-        
-        /* Card Styles */
-        .mobile-card {
-            background-color: #1e293b;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 0px; /* Removido margem pois agora agrupamos */
-            border: 1px solid #334155;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
+        .mobile-card { background-color: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 0px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         label { display: block; margin-bottom: 8px; font-weight: 600; color: #94a3b8; font-size: 0.9rem; }
-        
-        /* Ajuste Navigation Bar Mobile */
         .nav-btn.active span { color: #3b82f6; }
         .nav-btn.active .material-icons { transform: translateY(-2px); text-shadow: 0 4px 12px rgba(59, 130, 246, 0.5); }
+        .table-group-header { background-color: #2563eb40; border-top: 1px solid #3b82f6; border-bottom: 1px solid #3b82f6; }
+        .table-group-total { background-color: #1e293b; font-weight: bold; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen pb-24 md:pb-0 selection:bg-blue-500 selection:text-white">
@@ -180,23 +150,21 @@
                 </button>
             </div>
 
-            <div id="mobileList" class="space-y-6 pb-safe-bottom md:hidden">
-                </div>
+            <div id="mobileList" class="space-y-6 pb-safe-bottom md:hidden"></div>
 
             <div class="hidden overflow-hidden border rounded-xl md:block bg-decanter-dark shadow-xl border-gray-700">
                 <table class="w-full text-left border-collapse">
                     <thead class="text-[11px] font-bold tracking-wider uppercase bg-gray-800/50 text-gray-400">
                         <tr>
-                            <th class="p-4">Data</th>
-                            <th class="p-4">Origem / #Pl</th>
+                            <th class="p-4 w-[100px]">Data</th>
+                            <th class="p-4 w-[120px]">Origem / #Pl</th>
                             <th class="p-4">Destino</th>
-                            <th class="p-4 text-right">KM</th>
-                            <th class="p-4 text-right">Valor</th>
-                            <th class="p-4">Obs</th>
-                            <th class="p-4 text-center">Ação</th> </tr>
+                            <th class="p-4 text-right w-[80px]">KM</th>
+                            <th class="p-4 text-right w-[100px]">Valor</th>
+                            <th class="p-4 w-[150px]">Obs</th>
+                            <th class="p-4 text-center w-[50px]">Ação</th> </tr>
                     </thead>
-                    <tbody id="desktopTableBody" class="text-sm divide-y divide-gray-700/50">
-                        </tbody>
+                    <tbody id="desktopTableBody" class="text-sm divide-y divide-gray-700/50"></tbody>
                 </table>
             </div>
 
@@ -238,7 +206,7 @@
             </div>
         </section>
 
-        </main>
+    </main>
 
     <nav class="fixed bottom-0 left-0 z-50 w-full border-t md:hidden backdrop-blur-xl bg-[#1e293b]/95 border-gray-700/50 pb-[env(safe-area-inset-bottom)]">
         <div class="flex items-center justify-between h-16 px-6">
@@ -254,7 +222,7 @@
                 <span class="mb-0.5 text-2xl material-icons">analytics</span>
                 <span class="text-[9px] font-medium">Excel</span>
             </button>
-            </div>
+        </div>
     </nav>
     
     <div class="fixed left-0 top-0 z-30 hidden w-64 h-full px-4 pt-24 space-y-2 border-r md:flex flex-col bg-decanter-dark border-gray-700">
@@ -316,6 +284,29 @@
     
 
     <script>
+        // Global variable for current day (YYYY-MM-DD)
+        let today; 
+
+       // --- FUNÇÕES AUXILIARES DE DATA ---
+        function formatCurrencyBRL(value) {
+            // Garante que o número não tenha separador de milhares indesejado no Excel
+            return value.toFixed(2).replace('.', ','); 
+        }
+
+        // Novo nome e simplificada para apenas formatar a exibição (DD/MM/YYYY)
+        function formatDateDisplay(dateStr) {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        // Mantida para a lógica de filtro do Excel (comparação de datas)
+        function parseDateForFilter(dateStr) {
+            if (!dateStr) return null;
+            // CORRIGIDO O ERRO DE SINTAXE: Cria a data no formato UTC para garantir que o parse seja consistente
+            return new Date(dateStr.replace(/-/g, '/') + 'T00:00:00Z'); 
+        }
+
         // --- 1. FUNÇÕES GERAIS ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -380,13 +371,11 @@
 
         // --- 2. SALVAR DADOS ---
         document.addEventListener('DOMContentLoaded', () => {
-            const today = new Date().toISOString().split('T')[0];
+            today = new Date().toISOString().split('T')[0];
             document.getElementById('data').value = today;
-            
             document.getElementById('excelStart').value = today;
             document.getElementById('excelEnd').value = today;
-
-            renderList(); // Carrega a lista ao iniciar
+            renderList();
             updateSidebarTotal();
         });
 
@@ -424,44 +413,37 @@
             localStorage.setItem('entregasDecanter', JSON.stringify(entregas));
             
             showToast('Entrega salva!');
-            
             this.reset();
             document.getElementById('data').value = today;
             document.getElementById('local').value = 'Entrega';
             document.getElementById('paraQuem').value = '';
             toggleOutros();
-
             if(navigator.vibrate) navigator.vibrate(50);
             updateSidebarTotal();
-            renderList(); // Atualiza a lista após salvar
+            renderList();
         });
 
-        // --- 3.1 RESUMO DO DIA (FECHAR DIA) ---
+        // --- 3.1 RESUMO DO DIA ---
         function closeDaySummary() {
             const selectedDate = document.getElementById('data').value;
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
-            
-            // Filtra entregas da data selecionada
             const todayEntregas = entregas.filter(e => e.data === selectedDate);
-            
             const totalKm = todayEntregas.reduce((sum, item) => sum + item.km, 0);
             const totalVal = todayEntregas.reduce((sum, item) => sum + item.valor, 0);
 
-            document.getElementById('summaryDate').innerText = new Date(selectedDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-            document.getElementById('summaryKm').innerText = totalKm.toFixed(1) + ' km';
+            // CORRIGIDO: Usando a função correta de display
+            document.getElementById('summaryDate').innerText = formatDateDisplay(selectedDate);
+            document.getElementById('summaryKm').innerText = totalKm.toFixed(1).replace('.', ',') + ' km';
             document.getElementById('summaryVal').innerText = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            
             document.getElementById('summaryModal').classList.remove('hidden');
         }
 
         // --- 4. FUNÇÃO PARA EXCLUIR ITEM ---
         function deleteDelivery(id) {
             if (!confirm("Tem certeza que deseja excluir esta entrega?")) return;
-            
             let entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
             entregas = entregas.filter(e => e.id !== id);
             localStorage.setItem('entregasDecanter', JSON.stringify(entregas));
-            
             showToast('Entrega excluída!');
             renderList();
             updateSidebarTotal();
@@ -478,7 +460,6 @@
         // --- 5. RENDERIZAÇÃO DA LISTA ---
         function renderList() {
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
-            
             document.getElementById('totalCount').innerText = `${entregas.length} entregas salvas`;
             
             const mobileList = document.getElementById('mobileList');
@@ -492,8 +473,8 @@
             }
             document.getElementById('emptyState').classList.add('hidden');
 
-            // Agrupa por data (garantindo que seja UTC para a data ser consistente)
-            const groupedByDate = entregas.sort((a, b) => new Date(b.data + 'T00:00:00Z') - new Date(a.data + 'T00:00:00Z'))
+            // CORRIGIDO: Agrupa e ordena por data (mais recente primeiro) usando comparação de string
+            const groupedByDate = entregas.sort((a, b) => b.data.localeCompare(a.data))
                                         .reduce((acc, item) => {
                                             if (!acc[item.data]) {
                                                 acc[item.data] = [];
@@ -502,20 +483,27 @@
                                             return acc;
                                         }, {});
 
-            // Renderiza a lista móvel
             for (const date in groupedByDate) {
                 const items = groupedByDate[date];
+                const dayTotalKm = items.reduce((sum, item) => sum + item.km, 0);
                 const dayTotalVal = items.reduce((sum, item) => sum + item.valor, 0);
-                const dateFmt = new Date(date + 'T00:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit'});
+                // CORRIGIDO: Usando a função correta de display
+                const dateFmt = formatDateDisplay(date); 
 
-                // --- MOBILE RENDER (Group Header) ---
+                // --- MOBILE LIST (Separação por Data e Totais) ---
                 const groupDiv = document.createElement('div');
                 groupDiv.innerHTML = `
-                    <div class="flex justify-between items-end mb-2 px-1">
-                        <div class="text-sm font-bold text-gray-300 uppercase">${dateFmt}</div>
-                        <div class="text-xs text-right">
-                            <div class="text-gray-400">Total Dia</div>
-                            <span class="text-green-400 font-bold">${dayTotalVal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
+                    <div class="flex justify-between items-center mb-2 px-1 py-2 border-b border-gray-700">
+                        <div class="text-lg font-bold text-blue-400">${dateFmt}</div>
+                        <div class="flex gap-4 text-xs text-right">
+                            <div>
+                                <div class="text-gray-400">Total KM</div>
+                                <span class="text-orange-400 font-bold">${dayTotalKm.toFixed(1).replace('.', ',')} km</span>
+                            </div>
+                            <div>
+                                <div class="text-gray-400">Total Valor</div>
+                                <span class="text-green-400 font-bold">${dayTotalVal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -523,7 +511,7 @@
 
                 items.forEach(item => {
                     const card = document.createElement('div');
-                    card.className = "mobile-card mb-2"; // Cartão Mobile com botão de exclusão
+                    card.className = "mobile-card mb-2"; 
                     card.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex-grow">
@@ -533,7 +521,7 @@
                                 </div>
                                 <div class="flex items-center gap-4 text-xs text-gray-400">
                                     <div class="flex items-center gap-1"><span class="material-icons text-sm text-blue-500">place</span> ${item.local}</div>
-                                    <div class="flex items-center gap-1"><span class="material-icons text-sm text-orange-500">speed</span> ${item.km} km</div>
+                                    <div class="flex items-center gap-1"><span class="material-icons text-sm text-orange-500">speed</span> ${item.km.toFixed(1).replace('.', ',')} km</div>
                                     <div class="flex items-center gap-1 text-yellow-400 font-bold">#${item.paraQuem}</div>
                                 </div>
                                 ${item.obs ? `<p class="mt-2 text-xs text-gray-500 italic">Obs: ${item.obs}</p>` : ''}
@@ -546,30 +534,50 @@
                     mobileList.appendChild(card);
                 });
                 
-                // Adiciona um espaço extra entre os grupos de dias no mobile
                 const spacer = document.createElement('div');
                 spacer.className = "h-4";
                 mobileList.appendChild(spacer);
-            }
 
-            // Renderiza a tabela desktop
-            entregas.forEach(item => {
-                const row = desktopTableBody.insertRow();
-                row.className = "hover:bg-gray-800 transition";
-                row.innerHTML = `
-                    <td class="p-4">${new Date(item.data + 'T00:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit'})}</td>
-                    <td class="p-4">${item.local} / <span class="text-yellow-400 font-bold">#${item.paraQuem}</span></td>
-                    <td class="p-4 text-gray-300">${item.destino}</td>
-                    <td class="p-4 text-right text-blue-400">${item.km.toFixed(1).replace('.', ',')} km</td>
-                    <td class="p-4 text-right text-green-400 font-bold">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td class="p-4 text-xs text-gray-500">${item.obs || '-'}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="deleteDelivery(${item.id})" class="text-red-500/70 hover:text-red-400 p-1 rounded-full active:scale-95 transition">
-                            <span class="material-icons text-xl">delete</span>
-                        </button>
-                    </td>
+
+                // --- DESKTOP LIST (Separação por Data e Totais) ---
+                // Linha de Cabeçalho da Data
+                const headerRow = desktopTableBody.insertRow();
+                headerRow.className = "table-group-header";
+                headerRow.innerHTML = `
+                    <td class="p-4 text-white font-bold text-lg" colspan="3">${dateFmt}</td>
+                    <td class="p-4 text-right text-orange-300 font-bold" colspan="2">TOTAL KM</td>
+                    <td class="p-4 text-right text-green-300 font-bold" colspan="2">TOTAL VALOR</td>
                 `;
-            });
+
+                // Linhas de Itens
+                items.forEach(item => {
+                    const row = desktopTableBody.insertRow();
+                    row.className = "hover:bg-gray-800 transition";
+                    row.innerHTML = `
+                        <td class="p-4 text-gray-500">${dateFmt}</td>
+                        <td class="p-4">${item.local} / <span class="text-yellow-400 font-bold">#${item.paraQuem}</span></td>
+                        <td class="p-4 text-gray-300">${item.destino}</td>
+                        <td class="p-4 text-right text-blue-400">${item.km.toFixed(1).replace('.', ',')} km</td>
+                        <td class="p-4 text-right text-green-400 font-bold">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                        <td class="p-4 text-xs text-gray-500">${item.obs || '-'}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteDelivery(${item.id})" class="text-red-500/70 hover:text-red-400 p-1 rounded-full active:scale-95 transition">
+                                <span class="material-icons text-xl">delete</span>
+                            </button>
+                        </td>
+                    `;
+                });
+                
+                // Linha de Totais Diários
+                const totalRow = desktopTableBody.insertRow();
+                totalRow.className = "table-group-total border-b-2 border-blue-500";
+                totalRow.innerHTML = `
+                    <td class="p-4 text-white/50" colspan="3">Total do Dia:</td>
+                    <td class="p-4 text-right text-orange-400 font-bold">${dayTotalKm.toFixed(1).replace('.', ',')} km</td>
+                    <td class="p-4 text-right text-green-400 font-bold">${dayTotalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-4" colspan="2"></td>
+                `;
+            }
         }
         
         function updateSidebarTotal() {
@@ -579,421 +587,297 @@
         }
 
 
-        // --- 6. FUNÇÕES PARA EXCEL ---
+    // Substitua sua função generateExcel() por esta
+function generateExcel() {
+    const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+    
+    if (entregas.length === 0) {
+        showToast("Nada para exportar.");
+        return;
+    }
 
-        // Função auxiliar para formatar o valor monetário BRL (mantém a vírgula para o Excel)
-        function formatCurrencyBRL(value) {
-            // Garante que o número não tenha separador de milhares indesejado no Excel
-            return value.toFixed(2).replace('.', ','); 
-        }
+    const startStr = document.getElementById('excelStart').value;
+    const endStr = document.getElementById('excelEnd').value;
+    
+    if(!startStr || !endStr) {
+        alert("Selecione as datas.");
+        return;
+    }
 
-        // Função auxiliar para criar um objeto Date garantido em UTC
-        function parseDateAsUTC(dateStr) {
-            if (!dateStr) return null;
-            // 'YYYY-MM-DD' + 'T00:00:00Z' força o Date a ser criado como meia-noite UTC,
-            // eliminando problemas de fuso horário local e garantindo que o dia não seja perdido.
-            return new Date(dateStr + 'T00:00:00Z');
-        }
+    const targets = ['1', '2', '3'];
 
+    // filtrar por data
+    const filtered = entregas.filter(e => e.data >= startStr && e.data <= endStr);
+    
+    if (filtered.length === 0) {
+         showToast("Nenhuma entrega encontrada no período selecionado.");
+         return;
+    }
 
-        // --- 7. EXCEL AVANÇADO (CORRIGIDO E COM FORMATAÇÃO BONITA) ---
-        function generateExcel() {
-            const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
+    // agrupar por data e target
+    const itemsGroupedByDate = filtered.reduce((acc, item) => {
+        if (!acc[item.data]) acc[item.data] = {};
+        if (!acc[item.data][item.paraQuem]) acc[item.data][item.paraQuem] = [];
+        acc[item.data][item.paraQuem].push(item);
+        return acc;
+    }, {});
+
+    const allDates = Object.keys(itemsGroupedByDate).sort();
+    
+    const columnsData = { '1': [], '2': [], '3': [] };
+
+    const grandTotals = {
+        '1': { km: 0, val: 0 },
+        '2': { km: 0, val: 0 },
+        '3': { km: 0, val: 0 }
+    };
+
+    // construir pilhas - garantir Number nos campos numéricos
+    targets.forEach(target => {
+        allDates.forEach(date => {
+            const items = (itemsGroupedByDate[date] && itemsGroupedByDate[date][target]) || [];
             
-            if (entregas.length === 0) {
-                showToast("Nada para exportar.");
-                return;
-            }
+            if (items.length > 0) {
+                let dayKm = 0;
+                let dayVal = 0;
 
-            const startStr = document.getElementById('excelStart').value;
-            const endStr = document.getElementById('excelEnd').value;
-            
-            if(!startStr || !endStr) {
-                alert("Selecione as datas.");
-                return;
-            }
-
-            const startDateObj = parseDateAsUTC(startStr);
-            let endDateObj = parseDateAsUTC(endStr);
-            // Adiciona 1 dia à data final para incluir o dia inteiro no filtro
-            endDateObj.setUTCDate(endDateObj.getUTCDate() + 1); 
-
-            const targets = ['1', '2', '3'];
-
-            // 1. Filtrar por data
-            const filtered = entregas.filter(e => {
-                const entryDateObj = parseDateAsUTC(e.data);
-                return entryDateObj >= startDateObj && entryDateObj < endDateObj;
-            });
-            
-            if (filtered.length === 0) {
-                 showToast("Nenhuma entrega encontrada no período selecionado.");
-                 return;
-            }
-
-            // 2. Agrupar por data e por Target
-            const itemsGroupedByDate = filtered.reduce((acc, item) => {
-                if (!acc[item.data]) acc[item.data] = {};
-                if (!acc[item.data][item.paraQuem]) acc[item.data][item.paraQuem] = [];
-                acc[item.data][item.paraQuem].push(item);
-                return acc;
-            }, {});
-
-            // 3. Obter todas as datas únicas e ordenadas
-            const allDates = Object.keys(itemsGroupedByDate).sort();
-
-            const finalAoa = []; // Array of Arrays (Array de Dados)
-            let grandTotal = { km: 0, val: 0 };
-            
-            let currentRowForAoa = 2; // Começa após o cabeçalho (Linhas 0 e 1)
-
-            // 4. Loop por dia
-            allDates.forEach(date => {
-                const itemsByTarget = itemsGroupedByDate[date];
-
-                // Calcular totais diários por target (usado no próximo bloco de correção)
-                const dailyTotals = {};
-                targets.forEach(t => {
-                    const items = itemsByTarget[t] || [];
-                    dailyTotals[t] = { 
-                        km: items.reduce((sum, i) => sum + i.km, 0), 
-                        val: items.reduce((sum, i) => sum + i.valor, 0) 
-                    };
-                    grandTotal.km += dailyTotals[t].km;
-                    grandTotal.val += dailyTotals[t].val;
+                items.forEach(item => {
+                    const kmNum = Number(item.km) || 0;
+                    const valNum = Number(item.valor) || 0;
+                    columnsData[target].push([
+                        formatDateDisplay(item.data),
+                        item.local,
+                        item.destino,
+                        kmNum, 
+                        valNum,
+                        item.obs
+                    ]);
+                    dayKm += kmNum;
+                    dayVal += valNum;
                 });
 
-                // Acha o Target com o maior número de entradas para alinhamento horizontal
-                const maxEntries = Math.max(
-                    (itemsByTarget['1'] || []).length,
-                    (itemsByTarget['2'] || []).length,
-                    (itemsByTarget['3'] || []).length
-                );
+                grandTotals[target].km += dayKm;
+                grandTotals[target].val += dayVal; 
 
-                // 1. Loop para colocar as Entregas (Alinhamento Horizontal)
-                for (let i = 0; i < maxEntries; i++) {
-                    const row = [];
-                    targets.forEach((target, index) => {
-                        const items = itemsByTarget[target] || [];
-                        const item = items[i]; // Tenta pegar a i-ésima entrega
-                        
-                        if (item) {
-                            // Dados da entrega formatados
-                            row.push(
-                                new Date(item.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
-                                item.local,
-                                item.destino,
-                                item.km.toFixed(1).replace('.', ','),
-                                formatCurrencyBRL(item.valor),
-                                item.obs
-                            );
-                        } else {
-                            // Células vazias para alinhamento
-                            row.push('', '', '', '', '', ''); 
-                        }
-                        
-                        // Coluna de separação G ou N
-                        if (index < targets.length - 1) {
-                            row.push(""); 
-                        }
-                    });
-                    finalAoa.push(row);
-                    currentRowForAoa++;
-                }
-
-
-                // --- 2. NOVO BLOCO DE CÁLCULO E INSERÇÃO DE TOTAL DIA (CORRIGIDO) ---
-                // Colunas de referência para cada Target
-                const targetCols = { 
-                    // Total (col 2, 9, 16) | KM (col 3, 10, 17) | Valor (col 4, 11, 18)
-                    1: { totalCellCol: 2, totalKmCol: 3, totalValorCol: 4 }, 
-                    2: { totalCellCol: 9, totalKmCol: 10, totalValorCol: 11 }, 
-                    3: { totalCellCol: 16, totalKmCol: 17, totalValorCol: 18 } 
-                };
-
-                const totalRow = new Array(20).fill('');
-                let hasAnyDeliveryOnDay = false;
-                
-                // Montar a linha de total consolidada (usando dailyTotals previamente calculado)
-                targets.forEach(target => {
-                    const total = dailyTotals[target];
-                    const km = total.km;
-                    const valor = total.val;
-                    
-                    // Usa o target como chave para targetCols
-                    const { totalCellCol, totalKmCol, totalValorCol } = targetCols[parseInt(target)];
-
-                    // **CORREÇÃO para o problema: Não mostrar se KM e Valor são 0**
-                    if (km > 0 || valor > 0) {
-                        hasAnyDeliveryOnDay = true;
-                        
-                        // Célula TOTAL DIA #X (Ex: C3, J3, Q3)
-                        totalRow[totalCellCol] = `TOTAL DIA #${target}`; 
-                        
-                        // Valores KM e Valor formatados
-                        totalRow[totalKmCol] = km.toFixed(1).replace('.', ','); 
-                        totalRow[totalValorCol] = formatCurrencyBRL(valor); 
-                    }
-                });
-
-                // **CORREÇÃO para o problema: Linha sendo pulada & Layout**
-                // Adiciona a linha de total (e a linha vazia seguinte) apenas se houver alguma entrega no dia.
-                if (hasAnyDeliveryOnDay) {
-                    finalAoa.push(totalRow);
-                    // Adiciona uma linha vazia para separar os dias, seguindo o padrão do seu layout.
-                    finalAoa.push(new Array(20).fill('')); 
-                    currentRowForAoa += 2;
-                }
-                // --- FIM DO NOVO BLOCO ---
-
-
-            }); // Fim do allDates.forEach
-
-
-            // 4. Linha do Somatório Geral
-            const grandTotalRow = [];
-            targets.forEach((target, index) => {
-                grandTotalRow.push(
-                    target,
-                    "",
-                    "SOMATÓRIO GERAL",
-                    grandTotal.km.toFixed(1).replace('.', ','),
-                    formatCurrencyBRL(grandTotal.val),
+                // Linha de Total Diário (numeros como Number)
+                columnsData[target].push([
+                    "", "", 
+                    `TOTAL DIA #${target}`, 
+                    Number(dayKm), 
+                    Number(dayVal),
                     ""
-                );
-                if (index < targets.length - 1) {
-                    grandTotalRow.push("");
-                }
-            });
-            finalAoa.push(grandTotalRow);
-            currentRowForAoa++;
-            finalAoa.push(new Array(20).fill("")); // Duas linhas em branco no final
-            finalAoa.push(new Array(20).fill(""));
+                ]);
 
-
-            // 5. Montar o cabeçalho (Duas linhas)
-            const titleRow = [
-                "1", "", "", "", "", "", // Target 1 (Col A-F)
-                "", // Separador G
-                "2", "", "", "", "", "", // Target 2 (Col H-M)
-                "", // Separador N
-                "3", "", "", "", "", "" // Target 3 (Col O-T)
-            ];
-            
-            const columnHeaders = [
-                "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs", // 6 cols
-                "", // Separador G
-                "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs", // 6 cols
-                "", // Separador N
-                "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs" // 6 cols
-            ];
-
-            const aoaWithHeaders = [
-                titleRow,
-                columnHeaders,
-                ...finalAoa
-            ];
-
-            // 6. Gerar a planilha
-            const ws = XLSX.utils.aoa_to_sheet(aoaWithHeaders);
-            
-            // 7. Mesclar células para os títulos (1, 2, 3)
-            if (!ws['!merges']) ws['!merges'] = [];
-            // Merge "1" over A1:F1
-            ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }); 
-            // Merge "2" over H1:M1 (H é a coluna 7, M é a 12)
-            ws['!merges'].push({ s: { r: 0, c: 7 }, e: { r: 0, c: 12 } });
-            // Merge "3" over O1:T1 (O é a coluna 14, T é a 19)
-            ws['!merges'].push({ s: { r: 0, c: 14 }, e: { r: 0, c: 19 } });
-
-            // 8. Aplicar Estilos
-            const headerFill = { fgColor: { rgb: "1E293B" } }; // Slate 800
-            const blueFill = { fgColor: { rgb: "2563EB" } }; // Blue 600
-            const greenFill = { fgColor: { rgb: "16A34A" } }; // Green 600
-            const blackFill = { fgColor: { rgb: "0F172A" } }; // Slate 900
-            const whiteFont = { color: { rgb: "FFFFFF" }, bold: true };
-            const headerFont = { color: { rgb: "94A3B8" }, bold: true, sz: 10 }; // Gray 400
-
-            // Aplicar estilos ao Título (Row 1)
-            [0, 7, 14].forEach(c => {
-                 const cellRef = XLSX.utils.encode_cell({ r: 0, c: c });
-                 const cell = ws[cellRef];
-                 if (cell) {
-                    cell.s = { 
-                        font: whiteFont, 
-                        fill: blueFill, 
-                        alignment: { horizontal: 'center', vertical: 'center' } 
-                    };
-                 }
-            });
-            
-            // Aplicar estilos ao sub-cabeçalho (Row 2)
-            for (let c = 0; c < 20; c++) {
-                const cellRef = XLSX.utils.encode_cell({ r: 1, c: c });
-                const cell = ws[cellRef];
-                if (cell) {
-                    // Colunas Data/Origem/Destino/Obs - Esquerda
-                    if (c === 0 || c === 1 || c === 2 || c === 5 || c === 7 || c === 8 || c === 9 || c === 12 || c === 14 || c === 15 || c === 16 || c === 19) {
-                        cell.s = { font: headerFont, fill: headerFill, alignment: { horizontal: 'left' } };
-                    } 
-                    // Colunas KM/Valor - Direita
-                    else if (c === 3 || c === 4 || c === 10 || c === 11 || c === 17 || c === 18) {
-                        cell.s = { font: headerFont, fill: headerFill, alignment: { horizontal: 'right' } };
-                    }
-                    // Separador G e N
-                    else if (c === 6 || c === 13) {
-                        cell.s = { fill: blackFill };
-                    }
-                }
+                // Linha vazia de separação
+                columnsData[target].push(['', '', '', '', '', '']);
             }
+        });
 
+        // Linha de Somatório Geral (garantir Number)
+        columnsData[target].push([
+            target, 
+            "", 
+            "SOMATÓRIO GERAL", 
+            Number(grandTotals[target].km), 
+            Number(grandTotals[target].val), 
+            ""
+        ]);
+    });
 
-            // Aplicar estilos às linhas de dados (A partir da Row 3 - index 2)
-            // Lógica de zebra e formatação de números
-            for (let r = 2; r < aoaWithHeaders.length; r++) {
-                // Checa se é a linha de Somatório Geral para não aplicar o estilo de dados
-                if (aoaWithHeaders[r][2] && aoaWithHeaders[r][2].includes("SOMATÓRIO GERAL")) {
-                    continue;
+    const maxRows = Math.max(columnsData['1'].length, columnsData['2'].length, columnsData['3'].length);
+    const finalAoa = [];
+
+    for (let i = 0; i < maxRows; i++) {
+        const row = [];
+        targets.forEach((target, index) => {
+            const cellData = columnsData[target][i] || ['', '', '', '', '', ''];
+            row.push(...cellData);
+            if (index < targets.length - 1) row.push(""); // coluna separadora
+        });
+        while(row.length < 20) row.push("");
+        finalAoa.push(row);
+    }
+    
+    // headers
+    const titleRow = [
+        "1", "", "", "", "", "", "", 
+        "2", "", "", "", "", "", "", 
+        "3", "", "", "", "", ""
+    ];
+    const columnHeaders = [
+        "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs", "", 
+        "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs", "", 
+        "Data", "Origem", "Destino", "KM", "Valor (R$)", "Obs" 
+    ];
+
+    const aoaWithHeaders = [titleRow, columnHeaders, ...finalAoa];
+    const ws = XLSX.utils.aoa_to_sheet(aoaWithHeaders);
+
+    // merges e estilos (mantive sua lógica)
+    if (!ws['!merges']) ws['!merges'] = [];
+    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }); 
+    ws['!merges'].push({ s: { r: 0, c: 7 }, e: { r: 0, c: 12 } });
+    ws['!merges'].push({ s: { r: 0, c: 14 }, e: { r: 0, c: 19 } });
+
+    const headerFill = { fgColor: { rgb: "1E293B" } }; 
+    const blueFill = { fgColor: { rgb: "2563EB" } }; 
+    const greenFill = { fgColor: { rgb: "16A34A" } }; 
+    const blackFill = { fgColor: { rgb: "0F172A" } }; 
+    const whiteFont = { color: { rgb: "FFFFFF" }, bold: true };
+    const headerFont = { color: { rgb: "94A3B8" }, bold: true, sz: 10 }; 
+    const centered = { horizontal: 'center', vertical: 'center' };
+    const rightAligned = { horizontal: 'right' };
+    const leftAligned = { horizontal: 'left' };
+    const thinBorder = {
+        top: { style: "thin", color: { rgb: "334155" } }, 
+        bottom: { style: "thin", color: { rgb: "334155" } },
+        left: { style: "thin", color: { rgb: "334155" } },
+        right: { style: "thin", color: { rgb: "334155" } },
+    };
+
+    // formatos
+    const kmNumFmt = '#,##0.0';
+    const valNumFmt = '"R$ " #,##0.00';
+
+    // aplicar estilo aos títulos gerias (linha 0)
+    [0, 7, 14].forEach(c => {
+         const cellRef = XLSX.utils.encode_cell({ r: 0, c: c });
+         const cell = ws[cellRef];
+         if (cell) cell.s = { font: whiteFont, fill: blueFill, alignment: centered };
+    });
+    
+    // estilizar cabeçalhos (linha 1) — também definir cell.z para forçar numFmt em Excel quando aplicável
+    for (let c = 0; c < 20; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 1, c: c });
+        const cell = ws[cellRef];
+        if (cell) {
+            if (!cell.s) cell.s = {};
+            cell.s.font = headerFont;
+            cell.s.fill = headerFill;
+            cell.s.border = thinBorder;
+            if (c === 3 || c === 4 || c === 10 || c === 11 || c === 17 || c === 18) {
+                cell.s.alignment = rightAligned;
+                if (c === 4 || c === 11 || c === 18) {
+                    cell.s.numFmt = valNumFmt;
+                    cell.z = valNumFmt;
+                } else if (c === 3 || c === 10 || c === 17) {
+                    cell.s.numFmt = kmNumFmt;
+                    cell.z = kmNumFmt;
                 }
-                
-                // Checa se a linha é o TOTAL DIA (o campo de destino/coluna C, J ou Q começa com "TOTAL DIA")
-                const isTotalRow = aoaWithHeaders[r][2] && aoaWithHeaders[r][2].startsWith("TOTAL DIA #");
-                
-                // Itera por todos os targets para aplicar estilos
-                targets.forEach((_, index) => {
-                    const startCol = index * 7;
-                    const kmCol = startCol + 3;
-                    const valorCol = startCol + 4;
+            } else if (c !== 6 && c !== 13) {
+                cell.s.alignment = leftAligned;
+            }
+            if (c === 6 || c === 13) {
+                cell.s.fill = blackFill;
+                cell.s.font = undefined; 
+                cell.s.border = undefined; 
+            }
+        }
+    }
+    
+    // mapeamento colunas de valor/km
+    for (let r = 2; r < aoaWithHeaders.length; r++) {
+        targets.forEach((_, index) => {
+            const startCol = index * 7;
+            const textCol = startCol + 2; 
+            const kmCol = startCol + 3;
+            const valorCol = startCol + 4;
+            const sepCol = startCol + 6;
+            
+            const cellContent = aoaWithHeaders[r][textCol];
+            const isTotalCell = (typeof cellContent === 'string' && cellContent.startsWith("TOTAL DIA"));
+            const isGrandTotalCell = (typeof cellContent === 'string' && cellContent === "SOMATÓRIO GERAL");
+
+            const fill = (r % 2 === 1 && !isTotalCell && !isGrandTotalCell) ? { fgColor: { rgb: "1E293B" } } : undefined;
+            
+            for(let c = startCol; c <= startCol + 5; c++) {
+                const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                let cell = ws[cellRef]; 
+
+                // se não existe célula, criar com tipo correto
+                const raw = aoaWithHeaders[r][c];
+                if (!cell && raw !== undefined && raw !== "") {
+                    const isNumber = (typeof raw === 'number') || (!isNaN(Number(raw)) && raw !== '');
+                    cell = { v: isNumber ? Number(raw) : raw, t: isNumber ? 'n' : 's' };
+                    ws[cellRef] = cell;
+                }
+
+                if (cell) {
+                    if (!cell.s) cell.s = {};
+                    cell.s.fill = fill;
                     
-                    // Preenchimento de fundo zebra (exceto nas linhas de total)
-                    const fill = r % 2 === 1 && !isTotalRow ? { fgColor: { rgb: "1E293B" } } : undefined;
+                    if (cell.v !== '' || isTotalCell || isGrandTotalCell) {
+                        cell.s.border = thinBorder;
+                    }
                     
-                    // Aplica estilo a KM (Coluna 4, 11, 18)
-                    const kmCellRef = XLSX.utils.encode_cell({ r: r, c: kmCol });
-                    if (ws[kmCellRef]) {
-                        if (!ws[kmCellRef].s) ws[kmCellRef].s = {};
-                        ws[kmCellRef].s.alignment = { horizontal: 'right' };
-                        ws[kmCellRef].s.fill = fill;
+                    if (isTotalCell) {
+                        cell.s.font = whiteFont;
+                        cell.s.fill = headerFill;
+                        if (c === textCol) cell.s.alignment = centered;
+                        cell.s.border = thinBorder;
+                    }
+                    
+                    if (isGrandTotalCell) {
+                        cell.s.font = whiteFont;
+                        cell.s.fill = greenFill;
+                        if (c === textCol) cell.s.alignment = centered;
+                        cell.s.border = thinBorder;
                     }
 
-                    // Aplica estilo a Valor (Coluna 5, 12, 19)
-                    const valorCellRef = XLSX.utils.encode_cell({ r: r, c: valorCol });
-                    if (ws[valorCellRef]) {
-                        if (!ws[valorCellRef].s) ws[valorCellRef].s = {};
-                        ws[valorCellRef].s.alignment = { horizontal: 'right' };
-                        ws[valorCellRef].s.fill = fill;
-                    }
-                    
-                    // Aplica preenchimento zebra nas colunas de texto (Data, Origem, Destino, Obs)
-                    for(let c = startCol; c < startCol + 6; c++) {
-                        // Não aplica o fill nas colunas KM e Valor, pois já foi feito acima
-                        if(c === kmCol || c === valorCol) continue; 
-                        
-                        const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
-                        if (ws[cellRef]) {
-                             if (!ws[cellRef].s) ws[cellRef].s = {};
-                             ws[cellRef].s.fill = fill;
+                    // aplicar formatação e garantir cell.t = 'n' e cell.z
+                    if (c === kmCol || c === valorCol) {
+                        if (c === kmCol) {
+                            cell.s.numFmt = kmNumFmt;
+                            cell.z = kmNumFmt;
                         }
-                    }
-
-                    // Se for linha de TOTAL DIA, aplica estilo especial
-                    if (isTotalRow) {
-                        const totalDestinoCol = startCol + 2;
-                        
-                        // Estilo de preenchimento da linha de Total Dia (exceto Separador)
-                        for(let c = startCol; c <= startCol + 5; c++) {
-                            const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
-                            if (ws[cellRef]) {
-                                if (!ws[cellRef].s) ws[cellRef].s = {};
-                                ws[cellRef].s.font = whiteFont;
-                                ws[cellRef].s.fill = headerFill;
+                        if (c === valorCol) {
+                            cell.s.numFmt = valNumFmt;
+                            cell.z = valNumFmt;
+                        }
+                        // garantir que o tipo seja numérico (se for string numérica, converter)
+                        if (typeof cell.v === 'string' && cell.v !== '') {
+                            const possibleNum = Number(cell.v.toString().replace(',', '.'));
+                            if (!isNaN(possibleNum)) {
+                                cell.v = possibleNum;
+                                cell.t = 'n';
                             }
                         }
-                        
-                        // Alinhamento para "TOTAL DIA #X"
-                        ws[XLSX.utils.encode_cell({ r: r, c: totalDestinoCol })].s.alignment = { horizontal: 'center' };
-                        // Alinhamento para KM e Valor
-                        ws[XLSX.utils.encode_cell({ r: r, c: kmCol })].s.alignment = { horizontal: 'right' };
-                        ws[XLSX.utils.encode_cell({ r: r, c: valorCol })].s.alignment = { horizontal: 'right' };
+                        // se já for number, manter 'n'
+                        if (typeof cell.v === 'number') cell.t = 'n';
+                        cell.s.alignment = rightAligned;
+                    } else if (!isTotalCell && !isGrandTotalCell) {
+                        cell.s.alignment = leftAligned;
                     }
-                    
-                    // Separador G e N (Coluna 6, 13)
-                    const sepCol = startCol + 6;
-                    const sepCellRef = XLSX.utils.encode_cell({ r: r, c: sepCol });
-                    if(ws[sepCellRef]) {
-                         if (!ws[sepCellRef].s) ws[sepCellRef].s = {};
-                         ws[sepCellRef].s.fill = blackFill;
-                    }
-                });
-            }
-
-
-            // Aplicar estilos à linha do Somatório Geral (última linha com dados)
-            let grandTotalRowIndex = -1;
-            // Percorre de 2 (após cabeçalhos) para achar o Somatório Geral
-            for(let r = 2; r < aoaWithHeaders.length; r++) {
-                if(aoaWithHeaders[r][2] && aoaWithHeaders[r][2].includes("SOMATÓRIO GERAL")) {
-                    grandTotalRowIndex = r;
-                    break;
                 }
             }
 
-            targets.forEach((_, index) => {
-                const startCol = index * 7;
-                const totalDestinoCol = startCol + 2;
-                const totalKMCol = startCol + 3;
-                const totalValorCol = startCol + 4;
-                const endCol = startCol + 5;
-                
-                // Estilo de preenchimento da linha do Somatório Geral
-                for(let c = startCol; c <= endCol; c++) {
-                    const cellRef = XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: c });
-                    if (ws[cellRef]) {
-                        if (!ws[cellRef].s) ws[cellRef].s = {};
-                        ws[cellRef].s.font = whiteFont;
-                        ws[cellRef].s.fill = greenFill;
-                    }
-                }
-                
-                // Alinhamento
-                ws[XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: totalDestinoCol })].s.alignment = { horizontal: 'center' };
-                ws[XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: totalKMCol })].s.alignment = { horizontal: 'right' };
-                ws[XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: totalValorCol })].s.alignment = { horizontal: 'right' };
+            const sepCellRef = XLSX.utils.encode_cell({ r: r, c: sepCol });
+            if (!ws[sepCellRef]) ws[sepCellRef] = { v: "", t: 's' };
+            ws[sepCellRef].s = { fill: blackFill };
+        });
+    }
 
-                // Separador G e N
-                const sepCol = startCol + 6;
-                const sepCellRef = XLSX.utils.encode_cell({ r: grandTotalRowIndex, c: sepCol });
-                if(ws[sepCellRef]) {
-                     if (!ws[sepCellRef].s) ws[sepCellRef].s = {};
-                     ws[sepCellRef].s.fill = blackFill;
-                }
-            });
+    // larguras de coluna
+    ws['!cols'] = [
+        { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 }, 
+        { wch: 2 }, 
+        { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 }, 
+        { wch: 2 }, 
+        { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 } 
+    ];
 
-            // 8. Largura das colunas (20 colunas no total)
-            const wscols = [
-                { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 }, // Target 1 (A-F)
-                { wch: 2 }, // Separador G
-                { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 }, // Target 2 (H-M)
-                { wch: 2 }, // Separador N
-                { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 30 } // Target 3 (O-T)
-            ];
-            ws['!cols'] = wscols;
+    // gerar arquivo
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Relatorio Consolidado");
+    
+    const startFmt = formatDateDisplay(startStr);
+    const endFmt = formatDateDisplay(endStr);
+    const filename = `Relatorio_Consolidado_${startFmt.replace(/\//g, '-')}_ate_${endFmt.replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(wb, filename);
 
+    showToast("Relatório gerado!");
+}
 
-            // 9. Gerar e baixar o arquivo Excel
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Relatorio Consolidado");
-            
-            const startFmt = new Date(startDateObj).toLocaleDateString('pt-BR');
-            const endFmt = new Date(endDateObj.getUTCDate() - 1 === new Date(endDateObj).getUTCDate() ? endDateObj.setUTCDate(endDateObj.getUTCDate() - 1) && endDateObj : endDateObj.setUTCDate(endDateObj.getUTCDate() - 1) && endDateObj).toLocaleDateString('pt-BR');
-            
-            const filename = `Relatorio_Consolidado_${startFmt}_ate_${endFmt}.xlsx`;
-            
-            XLSX.writeFile(wb, filename);
-
-            showToast("Relatório gerado!");
-        }
-        
     </script>
 </body>
 </html>
