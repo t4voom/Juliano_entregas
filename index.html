@@ -588,11 +588,11 @@
             return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
         
-        // A função processTargetData foi removida pois a nova lógica do generateExcel
-        // calcula e alinha os dados diretamente por data, corrigindo o problema da mistura.
+        // A função 'processTargetData' FOI REMOVIDA pois a nova lógica do 'generateExcel' 
+        // calcula e alinha os dados diretamente por data e por grupo.
 
 
-        // --- 6. EXCEL AVANÇADO (Corrigido e Formatado) ---
+        // --- 6. EXCEL AVANÇADO (Corrigido, com Totais por Grupo e Somatório Geral) ---
         function generateExcel() {
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
             if (entregas.length === 0) { showToast("Nada para exportar."); return; }
@@ -609,44 +609,56 @@
             // 1. Filtrar por data
             const filtered = entregas.filter(e => {
                 const d = new Date(e.data);
-                return d >= new Date(startStr) && d < endDateObj;
+                // Filtra para pegar a data inicial até o final do dia da data final
+                return d >= new Date(startStr) && d < endDateObj; 
             });
 
             if(filtered.length === 0) { showToast("Nenhuma entrega neste período."); return; }
 
-            // 2. Coletar e ordenar todas as datas únicas do filtro
-            const allDates = [...new Set(filtered.map(e => e.data))].sort((a, b) => new Date(a) - new Date(b));
-            
-            // 3. Agrupar por data E por 'paraQuem'
+            const targets = ['1', '2', '3'];
+
+            // 2. Coletar datas únicas e Agrupar por data E por 'paraQuem'.
+            // Além disso, calcula os somatórios gerais para o período filtrado.
             const groupedData = filtered.reduce((acc, item) => {
-                if (!acc[item.data]) acc[item.data] = {};
                 const target = item.paraQuem || '1';
-                if (!acc[item.data][target]) acc[item.data][target] = [];
-                acc[item.data][target].push(item);
+                
+                // Agrupar por Data para o detalhe diário
+                if (!acc.byDate) acc.byDate = {};
+                if (!acc.byDate[item.data]) acc.byDate[item.data] = {};
+                if (!acc.byDate[item.data][target]) acc.byDate[item.data][target] = [];
+                acc.byDate[item.data][target].push(item);
+
+                // Calcular Somatórios Gerais por Target (1, 2, 3)
+                if (!acc.grandTotals) acc.grandTotals = { '1': { km: 0, val: 0 }, '2': { km: 0, val: 0 }, '3': { km: 0, val: 0 } };
+                acc.grandTotals[target].km += item.km;
+                acc.grandTotals[target].val += item.valor;
+                
                 return acc;
             }, {});
             
-            // 4. Montar o Array Final de Arrays (AoA) linha por linha
+            const allDates = [...new Set(filtered.map(e => e.data))].sort((a, b) => new Date(a) - new Date(b));
+            const itemsGroupedByDate = groupedData.byDate || {};
+            const grandTotals = groupedData.grandTotals || { '1': { km: 0, val: 0 }, '2': { km: 0, val: 0 }, '3': { km: 0, val: 0 } };
+            
+            // 3. Montar o Array Final de Arrays (AoA) linha por linha
             const finalAoa = [];
 
             allDates.forEach(date => {
-                const itemsByTarget = groupedData[date];
-                const targets = ['1', '2', '3'];
+                const itemsByTarget = itemsGroupedByDate[date];
 
                 // Encontrar o Target com mais linhas (entradas) para esta data
                 const maxEntries = Math.max(...targets.map(t => (itemsByTarget[t] || []).length), 0);
                 
-                // Se não houver itens, pulamos a data (embora o filtro acima já garanta que há)
                 if (maxEntries === 0) return;
 
-                // Calcular totais
-                let dayTotalKm = 0;
-                let dayTotalVal = 0;
-
+                // Calcular totais diários por target (usado na linha TOTAL DIA)
+                const dailyTotals = {};
                 targets.forEach(t => {
                     const items = itemsByTarget[t] || [];
-                    dayTotalKm += items.reduce((sum, i) => sum + i.km, 0);
-                    dayTotalVal += items.reduce((sum, i) => sum + i.valor, 0);
+                    dailyTotals[t] = {
+                        km: items.reduce((sum, i) => sum + i.km, 0),
+                        val: items.reduce((sum, i) => sum + i.valor, 0)
+                    };
                 });
 
                 // Loop para as linhas de dados (Entregas)
@@ -658,12 +670,12 @@
                         if (item) {
                             // Dados da entrega formatados
                             row.push(
-                                new Date(item.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'}), // Data
-                                item.local,                                                      // Origem
-                                item.destino,                                                    // Destino
-                                item.km.toFixed(1).replace('.', ','),                            // KM (Corrigido para usar vírgula)
-                                formatCurrencyBRL(item.valor),                                   // Valor (Corrigido com R$)
-                                item.obs                                                         // Obs
+                                new Date(item.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'}), // Data (Col A/H/O)
+                                item.local,                                                      // Origem (Col B/I/P)
+                                item.destino,                                                    // Destino (Col C/J/Q)
+                                item.km.toFixed(1).replace('.', ','),                            // KM (Col D/K/R)
+                                formatCurrencyBRL(item.valor),                                   // Valor (Col E/L/S)
+                                item.obs                                                         // Obs (Col F/M/T)
                             );
                         } else {
                             // Linhas vazias se não houver mais entregas neste Target
@@ -681,20 +693,16 @@
                 // LINHA DE TOTAL DO DIA
                 const totalRow = [];
                 targets.forEach((target, index) => {
-                    if (index === 0) {
-                        // Preenche o bloco 1 com o Total Geral da Data
-                        totalRow.push(
-                            "",             
-                            "",             
-                            "TOTAL DO DIA", 
-                            dayTotalKm.toFixed(1).replace('.', ','),          
-                            formatCurrencyBRL(dayTotalVal),         
-                            ""              
-                        );
-                    } else {
-                        // Preenche os outros blocos com células vazias
-                        totalRow.push("", "", "", "", "", "");
-                    }
+                    const total = dailyTotals[target];
+                    // Preenche o bloco com o Total Diário Específico daquele Target
+                    totalRow.push(
+                        "",             
+                        "",             
+                        `TOTAL DIA #${target}`, // Destino (Alinhado)
+                        total.km.toFixed(1).replace('.', ','), // KM (Total)        
+                        formatCurrencyBRL(total.val), // Valor (R$) (Total)        
+                        ""              
+                    );
                     if (index < targets.length - 1) {
                         totalRow.push("");
                     }
@@ -712,6 +720,29 @@
                     ]); 
                 }
             });
+
+            // 4. Adicionar a Linha de SOMATÓRIO GERAL (Grand Total por Target)
+            finalAoa.push([""], [""]); // Duas linhas em branco para separar do último dia
+
+            const grandTotalRow = [];
+            targets.forEach((target, index) => {
+                const total = grandTotals[target];
+                // Preenche o bloco com o Somatório Geral Específico daquele Target
+                grandTotalRow.push(
+                    "",             
+                    "",             
+                    `SOMATÓRIO GERAL #${target}`, // Destino (Alinhado)
+                    total.km.toFixed(1).replace('.', ','),          
+                    formatCurrencyBRL(total.val),         
+                    ""              
+                );
+                if (index < targets.length - 1) {
+                    grandTotalRow.push("");
+                }
+            });
+            finalAoa.push(grandTotalRow);
+            
+            finalAoa.push([""], [""]); // Duas linhas em branco no final
 
             // 5. Montar o cabeçalho (Duas linhas)
             const titleRow = [
@@ -742,11 +773,8 @@
             
             // 7. Mesclar células para os títulos (1, 2, 3)
             if (!ws['!merges']) ws['!merges'] = [];
-            // Merge "1" over A1:F1
             ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }); 
-            // Merge "2" over H1:M1 (H é a coluna 7, M é a 12)
             ws['!merges'].push({ s: { r: 0, c: 7 }, e: { r: 0, c: 12 } });
-            // Merge "3" over O1:T1 (O é a coluna 14, T é a 19)
             ws['!merges'].push({ s: { r: 0, c: 14 }, e: { r: 0, c: 19 } });
 
             // Largura das colunas (20 colunas no total)
