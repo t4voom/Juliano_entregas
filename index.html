@@ -597,7 +597,7 @@
             return new Date(dateStr + 'T00:00:00Z');
         }
 
-        // --- 6. EXCEL AVANÇADO (CORRIGIDO) ---
+        // --- 6. EXCEL AVANÇADO (CORRIGIDO PARA O NOVO LAYOUT) ---
         function generateExcel() {
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
             if (entregas.length === 0) { showToast("Nada para exportar."); return; }
@@ -607,7 +607,7 @@
             
             if(!startStr || !endStr) { alert("Selecione as datas."); return; }
             
-            // NOVO: Usa a função UTC para garantir datas consistentes
+            // Usa a função UTC para garantir datas consistentes (Correção do filtro)
             const startDateObj = parseDateAsUTC(startStr);
             let endDateObj = parseDateAsUTC(endStr);
             
@@ -618,12 +618,7 @@
 
             // 1. Filtrar por data
             const filtered = entregas.filter(e => {
-                // NOVO: O objeto de comparação (data do registro) também deve ser criado em UTC
                 const entryDateObj = parseDateAsUTC(e.data);
-                
-                // Filtra para pegar a data inicial (inclusiva) até o final do dia da data final (exclusiva)
-                // Ex: Se o filtro for de 01/12 até 03/12, a comparação será:
-                // entryDateObj >= 01/12 (UTC) E entryDateObj < 04/12 (UTC)
                 return entryDateObj >= startDateObj && entryDateObj < endDateObj; 
             });
 
@@ -632,7 +627,6 @@
             const targets = ['1', '2', '3'];
 
             // 2. Coletar datas únicas e Agrupar por data E por 'paraQuem'.
-            // Além disso, calcula os somatórios gerais para o período filtrado.
             const groupedData = filtered.reduce((acc, item) => {
                 const target = item.paraQuem || '1';
                 
@@ -661,12 +655,7 @@
             allDates.forEach(date => {
                 const itemsByTarget = itemsGroupedByDate[date];
 
-                // Encontrar o Target com mais linhas (entradas) para esta data
-                const maxEntries = Math.max(...targets.map(t => (itemsByTarget[t] || []).length), 0);
-                
-                if (maxEntries === 0) return;
-
-                // Calcular totais diários por target (usado na linha TOTAL DIA)
+                // Calcular totais diários por target
                 const dailyTotals = {};
                 targets.forEach(t => {
                     const items = itemsByTarget[t] || [];
@@ -676,54 +665,73 @@
                     };
                 });
 
-                // Loop para as linhas de dados (Entregas)
-                for (let i = 0; i < maxEntries; i++) {
+                // Controladores para o loop de alinhamento
+                const entryStates = {
+                    '1': { index: 0, totalPlaced: false, maxIndex: (itemsByTarget['1'] || []).length },
+                    '2': { index: 0, totalPlaced: false, maxIndex: (itemsByTarget['2'] || []).length },
+                    '3': { index: 0, totalPlaced: false, maxIndex: (itemsByTarget['3'] || []).length }
+                };
+
+                // Loop para interligar Entregas e Totais por Target
+                // Continua enquanto houver alguma entrada para colocar OU algum total que ainda não foi colocado
+                while (Object.values(entryStates).some(s => s.index < s.maxIndex || s.totalPlaced === false)) {
                     const row = [];
-                    
+                    let rowContent = false; // Flag para garantir que não adicionamos linhas 100% vazias no meio
+                    const blockLength = 6; // Colunas por bloco (Data, Origem, Destino, KM, Valor, Obs)
+
                     targets.forEach((target, index) => {
-                        const item = (itemsByTarget[target] || [])[i];
-                        if (item) {
-                            // Dados da entrega formatados
+                        const state = entryStates[target];
+                        const items = itemsByTarget[target] || [];
+
+                        if (state.index < state.maxIndex) {
+                            // 1. Coloca a Entrada (Item)
+                            const item = items[state.index];
                             row.push(
-                                new Date(item.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'}), // Data (Col A/H/O)
-                                item.local,                                                      // Origem (Col B/I/P)
-                                item.destino,                                                    // Destino (Col C/J/Q)
-                                item.km.toFixed(1).replace('.', ','),                            // KM (Col D/K/R)
-                                formatCurrencyBRL(item.valor),                                   // Valor (Col E/L/S)
-                                item.obs                                                         // Obs (Col F/M/T)
+                                new Date(item.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+                                item.local,
+                                item.destino,
+                                item.km.toFixed(1).replace('.', ','),
+                                formatCurrencyBRL(item.valor),
+                                item.obs
                             );
+                            state.index++; 
+                            rowContent = true;
+
+                        } else if (state.index === state.maxIndex && state.totalPlaced === false) {
+                            // 2. Coloca a Linha de TOTAL DIA, pois todas as entradas para este Target acabaram
+                            const total = dailyTotals[target];
+                            row.push(
+                                "",
+                                "",
+                                `TOTAL DIA #${target}`, // Destino (Alinhado)
+                                total.km.toFixed(1).replace('.', ','), // KM (Total)        
+                                formatCurrencyBRL(total.val), // Valor (R$) (Total)        
+                                ""
+                            );
+                            state.totalPlaced = true; 
+                            rowContent = true;
+
                         } else {
-                            // Linhas vazias se não houver mais entregas neste Target (Alinha horizontalmente neste dia)
-                            row.push("", "", "", "", "", "");
+                            // 3. Bloco vazio (Depois da última entrada E do total)
+                            for(let i=0; i < blockLength; i++) {
+                                row.push("");
+                            }
                         }
-                        
-                        // Adiciona o separador G e N
+
+                        // Adiciona o separador (G e N)
                         if (index < targets.length - 1) {
-                            row.push(""); 
+                            row.push("");
                         }
                     });
-                    finalAoa.push(row);
-                }
 
-                // LINHA DE TOTAL DO DIA (Aparece logo após a última entrega do dia)
-                const totalRow = [];
-                targets.forEach((target, index) => {
-                    const total = dailyTotals[target];
-                    // Preenche o bloco com o Total Diário Específico daquele Target
-                    totalRow.push(
-                        "",             
-                        "",             
-                        `TOTAL DIA #${target}`, // Destino (Alinhado)
-                        total.km.toFixed(1).replace('.', ','), // KM (Total)        
-                        formatCurrencyBRL(total.val), // Valor (R$) (Total)        
-                        ""              
-                    );
-                    if (index < targets.length - 1) {
-                        totalRow.push("");
+                    // Adiciona a linha ao AoA final
+                    if (row.some(cell => cell !== "")) { // Garante que a linha não é totalmente vazia
+                         finalAoa.push(row);
                     }
-                });
-                finalAoa.push(totalRow);
-
+                    
+                    // Condição de saída é controlada pelo `while` principal.
+                } // Fim do while (Loop Diário)
+                
                 // Linha em branco para SEPARAR um dia do outro (Visual)
                 finalAoa.push([
                     "", "", "", "", "", "", // Target 1 (A-F)
@@ -732,7 +740,7 @@
                     "",                     // Separador N
                     "", "", "", "", "", ""  // Target 3 (O-T)
                 ]); 
-            });
+            }); // Fim do allDates.forEach
 
             // 4. Adicionar a Linha de SOMATÓRIO GERAL (Grand Total por Target)
             finalAoa.push([""], [""]); // Duas linhas em branco para separar do último dia
