@@ -582,17 +582,14 @@
             }
         }
         
-        // --- FUNÇÃO AUXILIAR PARA FORMATAR VALOR EM REAL (NOVO) ---
+        // --- FUNÇÃO AUXILIAR PARA FORMATAR VALOR EM REAL ---
         function formatCurrencyBRL(value) {
             if (typeof value !== 'number') return value;
-            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            // Garante que o número não tenha separador de milhares indesejado no Excel
+            return value.toFixed(2).replace('.', ','); 
         }
-        
-        // A função 'processTargetData' FOI REMOVIDA pois a nova lógica do 'generateExcel' 
-        // calcula e alinha os dados diretamente por data e por grupo.
 
-
-        // --- 6. EXCEL AVANÇADO (Corrigido, com Totais por Grupo e Somatório Geral) ---
+        // --- 6. EXCEL AVANÇADO (Corrigido e Otimizado) ---
         function generateExcel() {
             const entregas = JSON.parse(localStorage.getItem('entregasDecanter') || '[]');
             if (entregas.length === 0) { showToast("Nada para exportar."); return; }
@@ -636,6 +633,7 @@
                 return acc;
             }, {});
             
+            // Coleta e ordena todas as datas que têm entregas dentro do filtro
             const allDates = [...new Set(filtered.map(e => e.data))].sort((a, b) => new Date(a) - new Date(b));
             const itemsGroupedByDate = groupedData.byDate || {};
             const grandTotals = groupedData.grandTotals || { '1': { km: 0, val: 0 }, '2': { km: 0, val: 0 }, '3': { km: 0, val: 0 } };
@@ -678,11 +676,11 @@
                                 item.obs                                                         // Obs (Col F/M/T)
                             );
                         } else {
-                            // Linhas vazias se não houver mais entregas neste Target
+                            // Linhas vazias se não houver mais entregas neste Target (Alinha horizontalmente neste dia)
                             row.push("", "", "", "", "", "");
                         }
                         
-                        // Adiciona o separador G e N, exceto após o último target
+                        // Adiciona o separador G e N
                         if (index < targets.length - 1) {
                             row.push(""); 
                         }
@@ -690,7 +688,7 @@
                     finalAoa.push(row);
                 }
 
-                // LINHA DE TOTAL DO DIA
+                // LINHA DE TOTAL DO DIA (Aparece logo após a última entrega do dia)
                 const totalRow = [];
                 targets.forEach((target, index) => {
                     const total = dailyTotals[target];
@@ -709,16 +707,14 @@
                 });
                 finalAoa.push(totalRow);
 
-                // 3 LINHAS EM BRANCO (para separação visual)
-                for(let i=0; i<3; i++) {
-                    finalAoa.push([
-                        "", "", "", "", "", "", // Target 1 (A-F)
-                        "",                     // Separador G
-                        "", "", "", "", "", "", // Target 2 (H-M)
-                        "",                     // Separador N
-                        "", "", "", "", "", ""  // Target 3 (O-T)
-                    ]); 
-                }
+                // Linha em branco para SEPARAR um dia do outro (Visual)
+                finalAoa.push([
+                    "", "", "", "", "", "", // Target 1 (A-F)
+                    "",                     // Separador G
+                    "", "", "", "", "", "", // Target 2 (H-M)
+                    "",                     // Separador N
+                    "", "", "", "", "", ""  // Target 3 (O-T)
+                ]); 
             });
 
             // 4. Adicionar a Linha de SOMATÓRIO GERAL (Grand Total por Target)
